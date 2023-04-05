@@ -1,0 +1,19 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+canvas {
+    width: 100%;
+    max-width: 1000px;
+    /* object-fit: contain; */
+}
+
+
+table tr td {
+    min-width: 96px;
+}
+table * {
+    text-align: left;
+}
