@@ -1,0 +1,10 @@
+- Camera panning
+- Death
+    + When falling off bottom of screen
+    + Lives
+- Treat off-screen tiles that are above as Air
+
+Low priority
+- Mario is too slippery on the ground
+    Friction/traction different?
+    mario should still take time to turn with higher ground friction

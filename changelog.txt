@@ -1,0 +1,7 @@
+v0.1
+- Collision
+- Reworked physics objects (such as the player) into a class
+- Added a basic enemy AI
+- Dropdown for selecting tile to draw
+- General tweaks/improvements to the controls + physics
++ More
