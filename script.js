@@ -848,6 +848,7 @@ var cheats = {
 document.addEventListener('keydown', event => {
     let key = event.key.toLowerCase();
     pressed[key] = true;
+    if(key == ' ' || key == 'arrowup' || key == 'arrowdown') event.preventDefault();
 })
 
 document.addEventListener('keyup', event => {
@@ -870,7 +871,8 @@ document.addEventListener('mouseup', event => {
 })
 
 // Debug
-document.addEventListener('wheel', event => {
+document.querySelector('canvas').addEventListener('wheel', event => {
+    event.preventDefault();
     // event.preventDefault();
     let dir = Math.sign(event.deltaY)*-1;
     cheats.zoom += dir;
