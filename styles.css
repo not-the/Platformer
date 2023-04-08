@@ -1,7 +1,16 @@
+* {
+    box-sizing: border-box;
+    image-rendering: pixelated;
+}
+*[role="button"] {
+    cursor: pointer;
+}
+
 body {
     background-color: black;
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
 }
 
 canvas {
@@ -16,4 +25,29 @@ table tr td {
 }
 table * {
     text-align: left;
+}
+
+.tools {
+    background-color: rgb(20, 20, 20);
+    border: 1px solid rgb(65, 65, 65);
+    border-radius: 4px;
+    width: fit-content;
+    margin: 4px;
+    padding: 8px;
+}
+.tools img {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 2px;
+    border: 2px solid transparent;
+    transition: transform 0.1s ease-out;
+}
+.tools img:hover {
+    transform: scale(1.25, 1.25);
+}
+.tools img.selection {
+    border-color: white;
+    border-radius: 4px;
+    background-color: rgb(65, 65, 65);
+    /* padding: 2px; */
 }

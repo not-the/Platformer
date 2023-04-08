@@ -1,3 +1,37 @@
+v0.3
+- Pressing escape pauses the game
+- Added placeable structures
+- Import/export level functionality
+- The erase tool now works on physics objects
+- Unique enemy death animation when killed by something that isn't a player (like a shell)
+- The game should now run at the same speed for both 60 and 120hz screens (game physics still run at 120)
+- New stage element selection
+- Tiles
+    + Bush (Medium)
+    + Bush (Large)
+    + Cloud
+    + Hill
+    + Hill (Large)
+- Structures
+    + Pipe
+    + Pipe neck
+- Objects
+    + Koopa
+    + Shell
+
+v0.2
+- Interactions between the player and enemies
+- Basic horizontal camera panning
+- Draw tool support for spawning physics objects
+- Mouse wheel to zoom and arrow keys to freecam
+- The player now has a lives stat
+- Falling off the bottom of the screen will now kill you
+- Fixed an issue where the player would act as if inside a block while off the top of the screen
+- Tiles
+    + Brick
+    + Question box
+    + Bush
+
 v0.1
 - Collision
 - Reworked physics objects (such as the player) into a class

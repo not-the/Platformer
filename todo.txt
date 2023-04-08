@@ -1,10 +1,27 @@
-- Camera panning
-- Death
-    + When falling off bottom of screen
-    + Lives
-- Treat off-screen tiles that are above as Air
+--- To Do -----------------------
+- Big mario + powerups
+- Points counter
+- Coins
+- Sometimes object collision code will run multiple times in cases where one of the objects isn't immediately made intangible
 
-Low priority
+Notes:
+- setTimeout and setInterval disregard game speed and whether or not the game is paused
+
+
+--- Low priority ----------------
+
 - Mario is too slippery on the ground
     Friction/traction different?
     mario should still take time to turn with higher ground friction
+
+
+--- Temporary fix ---------------
+- Camera panning
+- Treat off-screen tiles that are above as Air
+
+
+--- Done ------------------------
+
+- Death
+    + When falling off bottom of screen
+    + Lives
