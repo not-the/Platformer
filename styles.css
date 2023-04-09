@@ -2,8 +2,11 @@
     box-sizing: border-box;
     image-rendering: pixelated;
 }
-*[role="button"] {
+*[role="button"], input[type="button"], button {
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
 }
 
 body {
@@ -12,6 +15,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
 }
+.flex { display: flex; }
 
 canvas {
     width: 100%;
@@ -50,4 +54,91 @@ table * {
     border-radius: 4px;
     background-color: rgb(65, 65, 65);
     /* padding: 2px; */
+}
+
+/* Touch controls */
+.controls {
+    position: fixed;
+    bottom: 6px; right: 6px;
+    background-color: rgb(65, 65, 65);
+    padding: 12px 0;
+}
+.controls .column {
+    margin: 0 16px;
+}
+
+
+.controls button {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+
+    background-color: white;
+    border: none;
+    border-radius: 0 0 3px 3px;
+    opacity: 0.5;
+
+    /* transform-origin: top; */
+
+    transition-property: background-color;
+    transition-duration: 0.3s;
+    transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+.controls button:hover,
+.controls button:focus-visible {
+    opacity: 1;
+}
+.controls button:active {
+    opacity: 0.8;
+    transform: scale(0.9, 0.9);
+}
+
+/* Dpad */
+.controls .column {
+    padding: 16px;
+    width: 128px;
+    height: 128px;
+    position: relative;
+}
+.controls button > svg {
+    fill: white;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+
+    padding: 0;
+    margin: 0;
+
+    transition: fill 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+    opacity: 0.7;
+}
+
+/* Button positioning */
+.controls .column button:nth-of-type(1) {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+}
+.controls .column button:nth-of-type(2) {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+}
+.controls .column button:nth-of-type(3) {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.controls .column button:nth-of-type(4) {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+}
+
+
+/* Button pad */
+.controls .buttonpad button {
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
 }

@@ -1,3 +1,30 @@
+v0.4
+- Basic touchscreen controls
+- Interactions with bricks and ? boxes
+- Ability to put items into containers (no visual feedback yet)
+- Coin counter and coins in containers by default (no coin tiles yet)
+- Overhauled the way object properties are handled, the spawn function can now override properties like texture and motion
+- Fixes:
+    + Fixed tiles not animating correctly when importing a level
+    + Fixed turn_at_ledge ai turning in midair
+    + Fixed objects with collision disabled still interacting with other objects
+    + Generic fixes to shell physics
+- Tiles:
+    + Invisible Block
+    + Spikes
+- Objects
+    + Luigi
+    + Mushroom
+    + Particle
+
+New
+- Levels
+    + 1-1
+- Playable characters
+    + Luigi
+
+
+
 v0.3
 - Pressing escape pauses the game
 - Added placeable structures
