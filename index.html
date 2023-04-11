@@ -18,7 +18,7 @@
     <!-- Level options -->
     Level:
     <input type="button" value="New level" onclick="importLevel(false)"> Width:
-    <input type="number" name="option_level_width" id="option_level_width" value="25">
+    <input type="number" name="option_level_width" id="option_level_width" value="50">
     Resize: <input type="button" value="-" onclick="resizeLevel(-1)"><input type="button" value="+" onclick="resizeLevel(1)"><br/><br/>
 
     <!-- Tools -->
@@ -31,6 +31,8 @@
             <option value="tile/brick">brick</option>
             <option value="tile/question">question</option>
             <option value="tile/invis_question">invis_question</option>
+            <option value="tile/used">used</option>
+            <option value="tile/coin">coin</option>
             <option value="tile/bush">bush</option>
             <option value="tile/bush_med">bush_med</option>
             <option value="tile/bush_large">bush_large</option>
@@ -55,6 +57,8 @@
             <option value="object/red_koopa">red_koopa</option>
             <option value="object/red_shell">red_shell</option>
             <option value="object/mushroom">mushroom</option>
+            <option value="object/flower">flower</option>
+            <option value="object/fireball">fireball</option>
             <option value="object/particle">particle</option>
         </select><br/><br/>
         <img src="./assets/ui/eraser.png" alt="Eraser" role="button" data-value="tile/_" onclick="setEditorTool()" title="Eraser" class="selection">
@@ -63,6 +67,8 @@
         <img src="./assets/tile/brick.png" alt="brick" role="button" data-value="tile/brick" onclick="setEditorTool()">
         <img src="./assets/tile/question.png" alt="question" role="button" data-value="tile/question" onclick="setEditorTool()">
         <img src="./assets/ui/invis.png" alt="question" role="button" data-value="tile/invis_question" onclick="setEditorTool()">
+        <img src="./assets/tile/used.png" alt="question" role="button" data-value="tile/used" onclick="setEditorTool()">
+        <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/coin" onclick="setEditorTool()">
         <img src="./assets/tile/spikes.png" alt="question" role="button" data-value="tile/spikes" onclick="setEditorTool()">
         <img src="./assets/tile/pipe_top_l.png" alt="Eraser" role="button" data-value="structure/pipe" onclick="setEditorTool()">
         <img src="./assets/tile/pipe_l.png" alt="" role="button" data-value="structure/pipe_neck" onclick="setEditorTool()">
@@ -86,9 +92,37 @@
         <img src="./assets/enemy/red_shell.png" alt="" role="button" data-value="object/red_shell" onclick="setEditorTool()">
 
         <img src="./assets/item/mushroom.png" alt="" role="button" data-value="object/mushroom" onclick="setEditorTool()">
+        <img src="./assets/item/flower1.png" alt="" role="button" data-value="object/flower" onclick="setEditorTool()">
+
+        <img src="./assets/item/fireball1.png" alt="" role="button" data-value="object/fireball" onclick="setEditorTool()">
 
         <img src="./assets/particle/brick_break1.png" alt="" role="button" data-value="object/particle" onclick="setEditorTool()">
     </div>
+
+    <!-- Help -->
+    <div id="help">
+        <b>Controls</b>
+        <table>
+            <tr>
+                <th>Move</th>
+                <td>WASD</td>
+            </tr>
+            <tr>
+                <th>Jump</th>
+                <td>SPACEBAR</td>
+            </tr>
+            <tr>
+                <th>Run</th>
+                <td>SHIFT</td>
+            </tr>
+            <tr>
+                <th>Action/Dismount</th>
+                <td>E</td>
+            </tr>
+        </table>
+    </div>
+
+    <b>Debug</b>
     <div id="debug"></div>
 
     <!-- Touch controls -->

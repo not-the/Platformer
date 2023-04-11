@@ -3,7 +3,6 @@
 - Big sprite support
 - Power upsa
 - Points counter
-- Coins
 
 - Separate render layers
     Objects > Tiles > Decorative tiles > Background
@@ -14,10 +13,8 @@ Level editor
 - Automatically populate placeable tiles/objects
 - Animate objects when hovered in selection menu
 
-Bugs
+Known bugs
 - Sometimes object collision code will run multiple times in cases where one of the objects isn't immediately made intangible
-
-Notes:
 - setTimeout and setInterval disregard game speed and whether or not the game is paused
 
 
@@ -33,8 +30,9 @@ Notes:
 - Treat off-screen tiles that are above as Air
 
 
---- Done ------------------------
+--- Done (New - old) ------------
 
+- Coins
 - Death
     + When falling off bottom of screen
     + Lives

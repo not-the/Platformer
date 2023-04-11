@@ -9,7 +9,7 @@ const world = {
     absolute_slow: 0.01, // Slowest X speed possible before motion is rounded down to 0
 
     // Vertical
-    gravity:  0.125,
+    gravity:  0.15,
 
     level: './levels/test.json',
     
@@ -20,7 +20,7 @@ const world = {
 /** Physics objects templates */
 const objectTemplate = {
     'default': {
-        texture: '1_dead',
+        texture: 'still',
 
         type: 'default',
         player: false,
@@ -31,7 +31,6 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: false,
-        big_sprite: false,
 
         x: 0,
         y: 0,
@@ -40,8 +39,8 @@ const objectTemplate = {
         air_accel: 0.075,
         walk: 2.5,
         run: 5,
-        jump_accel: 7,
-        jump_accel_super: 7.8,
+        jump_accel: 6.4,
+        jump_accel_super: 7,
         traction: 1,
         air_traction: 1,
         gravity_multiplier: 1,
@@ -52,9 +51,19 @@ const objectTemplate = {
             r: 0,
         },
         facing: 1,
+
+        controls: {
+            up: 'w',
+            left: 'a',
+            right: 'd',
+            down: 's',
+            run: 'shift',
+            jump: ' ',
+            action: 'e',
+        },
     },
     'mario': {
-        texture: '1_small_still',
+        texture: 'mario_small_still',
     
         type: 'mario',
         player: 1,
@@ -65,7 +74,6 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: true,
-        // big_sprite: false,
     
         // x: 3,
         // y: 11,
@@ -74,22 +82,13 @@ const objectTemplate = {
         air_accel: 0.075,
         walk: 2.5,
         run: 5,
-        jump_accel: 7,
-        jump_accel_super: 7.8,
+        jump_accel: 6.4,
+        jump_accel_super: 7,
         // traction: 1,
         // air_traction: 1,
-
-        controls: {
-            up: 'w',
-            left: 'a',
-            right: 'd',
-            down: 's',
-            run: 'shift',
-            jump: ' ',
-        },
     },
     'luigi': {
-        texture: '2_small_still',
+        texture: 'luigi_small_still',
     
         type: 'luigi',
         player: 2,
@@ -100,30 +99,20 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: true,
-        big_sprite: false,
     
         x: 3,
         y: 11,
     
-        accel_x: 0.07,
-        air_accel: 0.07,
+        accel_x: 0.05,
+        air_accel: 0.075,
         walk: 2.5,
         run: 5,
-        jump_accel: 7.8,
-        jump_accel_super: 8.5,
+        jump_accel: 7,
+        jump_accel_super: 7.7,
         traction: 1.005,
         air_traction: 1,
     
         facing: 1,
-
-        controls: {
-            up: 'w',
-            left: 'a',
-            right: 'd',
-            down: 's',
-            run: 'shift',
-            jump: ' ',
-        },
     },
     'goomba': {
         texture: 'goomba',
@@ -131,13 +120,17 @@ const objectTemplate = {
         type: 'goomba',
         player: false,
         enemy: 'goomba',
-        control: 'ai',
+        ai_info: {
+            auto_walk: true,
+            turn_at_wall: true,
+            turn_at_ledge: false,
+            dissipate_at_wall: false,
+        },
 
         doMotion: true,
         collision: true,
         friction: true,
         animate_by_state: false,
-        big_sprite: false,
         traction: 1,
         air_traction: 1,
 
@@ -149,6 +142,7 @@ const objectTemplate = {
         jump_accel_super: 4,
 
         facing: -1,
+        no_mirror: true,
     },
 
     // Green Koopa
@@ -158,13 +152,17 @@ const objectTemplate = {
         type: 'koopa',
         player: false,
         enemy: 'koopa',
-        control: 'ai',
+        ai_info: {
+            auto_walk: true,
+            turn_at_wall: true,
+            turn_at_ledge: false,
+            dissipate_at_wall: false,
+        },
 
         doMotion: true,
         collision: true,
         friction: true,
         animate_by_state: false,
-        big_sprite: true,
         traction: 1,
         air_traction: 1,
 
@@ -183,13 +181,14 @@ const objectTemplate = {
         type: 'shell',
         player: false,
         enemy: 'shell',
-        control: 'shell',
+        ai_info: {
+            shell: true,
+        },
 
         doMotion: true,
         collision: true,
         friction: false,
         animate_by_state: false,
-        big_sprite: false,
         traction: 1,
         air_traction: 1,
 
@@ -210,13 +209,16 @@ const objectTemplate = {
         type: 'koopa',
         player: false,
         enemy: 'koopa',
-        control: 'ai_turn_at_ledge',
+        ai_info: {
+            auto_walk: true,
+            turn_at_wall: true,
+            turn_at_ledge: true,
+        },
 
         doMotion: true,
         collision: true,
         friction: true,
         animate_by_state: false,
-        big_sprite: true,
         traction: 1,
         air_traction: 1,
 
@@ -237,13 +239,14 @@ const objectTemplate = {
         type: 'shell',
         player: false,
         enemy: 'shell',
-        control: 'shell',
+        ai_info: {
+            shell: true,
+        },
 
         doMotion: true,
         collision: true,
         friction: false,
         animate_by_state: false,
-        big_sprite: false,
         traction: 1,
         air_traction: 1,
 
@@ -261,16 +264,20 @@ const objectTemplate = {
     'mushroom': {
         texture: 'mushroom',
 
-        type: 'mushroom',
+        type: 'big',
         player: false,
         enemy: 'powerup',
-        control: 'ai',
+        ai_info: {
+            auto_walk: true,
+            turn_at_wall: true,
+            turn_at_ledge: false,
+            dissipate_at_wall: false,
+        },
 
         doMotion: true,
         collision: true,
         friction: true,
         animate_by_state: false,
-        big_sprite: false,
         traction: 1,
         air_traction: 1,
 
@@ -280,6 +287,63 @@ const objectTemplate = {
         run: 2,
         jump_accel: 4,
         jump_accel_super: 4,
+
+        facing: 1,
+        no_mirror: true,
+    },
+    'flower': {
+        texture: 'flower',
+
+        type: 'fire',
+        player: false,
+        enemy: 'powerup',
+        // control: 'ai',
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+        animate_by_state: false,
+
+        traction: 1,
+        air_traction: 1,
+
+        accel_x: 0.5,
+        air_accel: 0,
+        walk: 1,
+        run: 2,
+        jump_accel: 4,
+        jump_accel_super: 4,
+
+        facing: 1,
+        no_mirror: true,
+    },
+
+    // Projectile
+    'fireball': {
+        texture: 'fireball',
+
+        type: 'fireball',
+        player: false,
+        enemy: 'fireball',
+        ai_info: {
+            bounce: true,
+            auto_walk: true,
+            turn_at_wall: false,
+            turn_at_ledge: false,
+            dissipate_at_wall: true,
+        },
+
+        doMotion: true,
+        collision: true,
+        friction: false,
+        animate_by_state: false,
+        traction: 1,
+        air_traction: 1,
+
+        accel_x: 3,
+        air_accel: 3,
+        walk: 3,
+        jump_accel: 4,
 
         facing: 1,
         no_mirror: true,
@@ -336,51 +400,48 @@ class tiledataclass {
     }
 
     collide(dir, tile, source) {
+        if(source.dead || !source.collision) return;
         const data = tiledata[tile.type];
         if(data == undefined) return;
 
         if(data.collisionCode) {
+            // Container
+            if(tile.contains && dir == 'b' || (dir != 'u' && source.type == 'shell')) {
+                this.animate(tile, 'bounce');
+                this.set(tile, 'used');
+                this.dropItem(tile);
+                return;
+            }
+            
             // Determine block (temporary?)
             switch (data.collisionCode) {
                 case 'question':
-                    if(dir == 'b' || (dir != 'u' && source.type == 'shell')) {
-                        this.animate(tile, 'bounce');
-                        this.set(tile, 'used');
-                        this.dropItem(tile);
-                    }
                     break;
                 case 'brick':
                     if(dir == 'b' || (dir != 'u' && source.type == 'shell')) {
                         this.animate(tile, 'bounce');
-                        
-                        // Drop item
-                        
                         this.set(tile, '_');
-                        spawn('particle', tile.x, tile.y, {
-                            motion: { x: -1.5, y: -5, r: -1, },
-                        });
-                        spawn('particle', tile.x, tile.y, {
-                            motion: { x: 1.5, y: -5, r: 1, }, texture: 'brick_break2'
-                        });
-                        spawn('particle', tile.x, tile.y, {
-                            motion: { x: -2, y: -4, r: -1, }, texture: 'brick_break3'
-                        });
-                        spawn('particle', tile.x, tile.y, {
-                            motion: { x: 2, y: -4, r: 1, }, texture: 'brick_break4'
-                        });
+                        spawn('particle', tile.x, tile.y, { motion: { x: -1.5, y: -5, r: -1, } });
+                        spawn('particle', tile.x, tile.y, { motion: { x: 1.5, y: -5, r: 1, }, texture: 'brick_break2' });
+                        spawn('particle', tile.x, tile.y, { motion: { x: -2, y: -4, r: -1, }, texture: 'brick_break3' });
+                        spawn('particle', tile.x, tile.y, { motion: { x: 2, y: -4, r: 1, }, texture: 'brick_break4' });
                     }
                     break;
                 case 'damage':
                     source.death();
                     break;
+                case 'coin':
+                    collectCoin();
+                    this.set(tile, '_');
                 default:
                     break;
             }
+
         }
     }
 
     dropItem(tile) {
-        if(tile.contains == 'coin') collectCoin(true, tile.x, tile.y);
+        if(tile.contains == 'coin') collectCoin(true, tile.x, tile.y-52);
         else {
             spawn(tile.contains, tile.x, tile.y-48, {
                 motion: { x: 0, y: -5, r: 0, },
@@ -456,6 +517,14 @@ const tiledata = {
         animated: false,
 
         collision: true,
+    }),
+    'coin': new tiledataclass({
+        // type: 'question',
+        texture: anim.coin,
+        animated: 0.07,
+
+        collision: false,
+        collisionCode: 'coin', // temporary
     }),
     'spikes': new tiledataclass({
         // type: 'question',

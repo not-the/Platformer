@@ -72,7 +72,6 @@ class physicsObject {
             ...clone(data),
             ...clone(additional_data),
         }
-        // console.log(combined);
 
         for(const key in combined) {
             let value = combined[key];
@@ -81,10 +80,14 @@ class physicsObject {
         this.s = new PIXI.AnimatedSprite(anim[this.texture]);
 
         // State
-        this.speed_x = this.walk, // Current max horizontal speed, changes when running
+        this.form = 'small';
+        this.speed_x = this.walk; // Current max horizontal speed, changes when running
         this.grounded = false;
         this.jump_ready = true;
+        this.jumping = false;
+        // this.jump_duration = 0;
         this.crouching = false;
+        this.power_ready = true;
         this.colliding = {
             u: false, r: false, l: false,
         }
@@ -112,6 +115,16 @@ class physicsObject {
 
     /** Physics */
     physics() {
+        // Riding
+        if(this.riding) {
+            const ride = this.riding;
+            let offset = this.riding.s.height != 48 ? 48 : 0;
+            this.s.x = ride.s.x;
+            this.s.y = ride.s.y - ride.s.height + offset;
+            if(!this.no_mirror) this.s.scale.x = this.riding.s.scale.x;
+            return;
+        }
+
         // Fell offscreen
         if(this.s.y > 768 && !this.dead) {
             if(this.player != false) this.death();
@@ -123,6 +136,36 @@ class physicsObject {
 
         /* ----- Physics ----- */
         // Ground
+        /* const a = { // Adjacent tile shorthand
+            inside: '0, 0',
+            left: '-1, 0',
+            right: '1, 0',
+            up: '0, -1',
+            under: '0, 1',
+
+            downleft: '-1, 1',
+            downright: '1, 1',
+            upleft: stage?.[Number(rcx)-1]?.[Number(rcy)-1],
+            upright: stage?.[Number(rcx)+1]?.[Number(rcy)-1],
+        }
+        for(let d in adj) {
+            if(adj[d] == undefined) {
+                if(rcx > 0 && rcx <= stage.length-2) adj[d] = { type: '_', data: tiledata['_'] };
+                else adj[d] = { type: 'ground', data: tiledata['ground'] };
+            }
+        }
+
+        let [w, h] = [Math.ceil(this.s.width / 48), Math.ceil(this.s.height / 48)];
+        let adj = {};
+        for(let wi = w; wi > w-3; wi--) {
+            for(let hm = h; hm > h-3; hm--) {
+                // let tile = this.getAdjacent(wi, hm)
+                // if(tile) tile.data.set(tile, 'hard');
+                adj[`${wi}, ${hi}`] = this.getAdjacent(wi, hm);
+            }
+        }
+        console.log(adj);
+        return; */
         let rc = convertCoord(this.s.x, this.s.y, true);
         let rcx = Math.round(Number(rc[0]));
         let rcy = Math.round(Number(rc[1]));
@@ -135,6 +178,13 @@ class physicsObject {
 
             downleft: stage?.[Number(rcx)-1]?.[Number(rcy)+1],
             downright: stage?.[Number(rcx)+1]?.[Number(rcy)+1],
+            upleft: stage?.[Number(rcx)-1]?.[Number(rcy)-1],
+            upright: stage?.[Number(rcx)+1]?.[Number(rcy)-1],
+
+            // Tall
+            up2: stage?.[rcx]?.[Number(rcy)-2],
+            upleft2: stage?.[Number(rcx)-1]?.[Number(rcy)-2],
+            upright2: stage?.[Number(rcx)+1]?.[Number(rcy)-2],
         }
         for(let d in adj) {
             if(adj[d] == undefined) {
@@ -143,12 +193,25 @@ class physicsObject {
             }
         }
         this.adj = adj;
-        let ground = 768; // 672 = bottom of screen
-        if(adj.under != undefined) if(tiledata[adj.under.type].collision) ground = convertCoord(rcx, Number(rcy))[1];
 
-        // Gravity
-        if(this.s.y < ground || Math.sign(world.gravity*this.gravity_multiplier) == -1 || !this.collision) {
-            this.motion.y += world.gravity*this.gravity_multiplier;
+        let ground = 768; // 672 = bottom of screen
+        if(adj.downleft.data.collision || adj.under.data.collision || adj.downright.data.collision) {
+            if(
+                adj.under.data.collision // Under
+                || (adj.downleft.data.collision && this.s.x % 48 < 16) // Downleft
+                || (adj.downright.data.collision && this.s.x % 48 > 32) // Downright
+            ) {
+                ground = convertCoord(rcx, Number(rcy))[1]; 
+            }
+        }
+
+        // Gravity & Vertical from above
+        if(this.s.y < ground || Math.sign(world.gravity*this.gravity_multiplier) == -1 || !this.collision
+            && Math.sign(this.motion.y) == 1
+        ) {
+            let grav = world.gravity * this.gravity_multiplier;
+            if(this.jumping && Math.sign(this.motion.y) == -1) grav *= 0.7;
+            this.motion.y += grav;
             this.grounded = false;
         } else if(this.s.y >= ground) {
             // Halt
@@ -159,53 +222,69 @@ class physicsObject {
             }
             // Collision event
             adj.under.data.collide('u', adj.under, this);
+            if(!adj.under.data.collision) {
+                adj.downleft.data.collide('u', adj.downleft, this);
+                adj.downright.data.collide('u', adj.downright, this);
+            }
         };
 
-        // Motion & Friction
-        // Left/Right
         let allowXMotion = true;
         let allowYMotion = true;
 
+        // Vertical from below
+        if(this.s.y % 48 > 36 && Math.sign(this.motion.y) == -1)  {
+            let left = (adj.upleft.data.collision && this.s.x % 48 < 16);
+            let right = (adj.upright.data.collision && this.s.x % 48 > 32);
+            if(
+                tiledata[adj.up.type].collision
+                || left // Downleft
+                || right // Upright
+            ) {
+                allowYMotion = false;
+                this.colliding.u = true;
+            }
+            adj.up.data.collide('b', adj.up, this);
+            if(left) adj.upleft.data.collide('b', adj.upleft, this);
+            if(right) adj.upright.data.collide('b', adj.upright, this);
+        }
+        else this.colliding.u = false;
+
+        // Motion & Friction
+
+        // Determine if movement is allowed
         if(this.s.x % 48 < 24) {  // Left wall
             if(Math.sign(this.motion.x) != 1) {
-                if(tiledata[adj.left.type].collision) {
+                if(
+                    tiledata[adj.left.type].collision
+                    || (this.form != 'small' && tiledata[adj.upleft.type].collision && !this.crouching)
+                ) {
                     allowXMotion = false;
                     this.colliding.l = true;
+                    this.s.x = (adj.left.x + 48) || this.s.x;
                 }
-                if(this.collision) adj.left.data.collide('r', adj.left, this);
+                adj.left.data.collide('r', adj.left, this);
             }
-            else this.colliding.l = false;
-        }
+        } else this.colliding.l = false;
         if(this.s.x % 48 > 24) { // Right wall
             if(Math.sign(this.motion.x) != -1) {
-                if(tiledata[adj.right.type].collision) {
+                if(
+                    tiledata[adj.right.type].collision
+                    || (this.form != 'small' && tiledata[adj.upright.type].collision && !this.crouching)
+                ) {
                     allowXMotion = false;
                     this.colliding.r = true;
+                    this.s.x = (adj.right.x - 48) || this.s.x;
                 }
-                if(this.collision) adj.right.data.collide('l', adj.right, this);
+                adj.right.data.collide('l', adj.right, this);
             }
-            else this.colliding.r = false;
-        }
+        } else this.colliding.r = false;
 
-        // Vertical
-        if(this.s.y % 48 > 36) {
-            if(Math.sign(this.motion.y) == -1)  {
-                if(tiledata[adj.up.type].collision) {
-                    allowYMotion = false;
-                    this.colliding.u = true;
-                }
-                if(this.collision) adj.up.data.collide('b', adj.up, this);
-            }
-            else this.colliding.u = false;
-        }
-
+        // Move
         if(allowXMotion || !this.collision) this.runMotion('x'); // Move subject
         else this.motion.x = 0; // Hit wall
-
         if(allowYMotion || !this.collision) this.runMotion('y'); // Move subject
         else this.motion.y = 0; // Hit ceiling
-
-        this.s.angle += this.motion.r;
+        // this.s.angle += this.motion.r;
         
         // Apply friction
         if(this.friction) {
@@ -214,49 +293,55 @@ class physicsObject {
             if(Math.abs(this.motion.x) < world.absolute_slow) this.motion.x = 0; // Round to 0
         }
 
-        // Move this back if stuck in a block
-        if(tiledata[adj.inside.type].collision && this.collision) this.s.x += - 1 * Math.sign(this.s.scale.x);
-
-
-        // Tile culling
-        // for(let i = 0; i < stage.length; i++) {
-        //     let list = stage[i];
-        //     for(let ii = 0; ii < list.length; ii++) {
-        //         var object = list[ii];
-        //         var bounds = object.getBounds();
-        //         let viewport = { x:0, y: 0, 'width': app.stage.width, 'height': app.stage.height }
-        //         object.renderable =
-        //             bounds.x >= viewport.x && 
-        //             bounds.y>=viewport.y && 
-        //             bounds.x+bounds.width <= viewport.height && 
-        //             bounds.y+bounds.height <= viewport.width;
-        //     }
-        // } 
+        // Inside block
+        if(
+            this.collision && (tiledata[adj.inside.type].collision
+            || (this.form != 'small' && tiledata[adj.up.type].collision && !this.crouching))
+        ) {
+            this.s.x += - 1 * Math.sign(this.s.scale.x);
+        }; // Move back if stuck in a block
+        adj.inside.data.collide('in', adj.inside, this); // Inside
     }
+
+    // getAdjacent(off_x=0, off_y=0) {
+    //     let rc = convertCoord(this.s.x, this.s.y, true);
+    //     let rcx = Math.round(Number(rc[0]));
+    //     let rcy = Math.round(Number(rc[1]));
+    //     let tile = stage?.[Number(rcx) + off_x]?.[Number(rcy) + off_y];
+
+    //     if(tile == undefined) {
+    //         if(rcx > 0 && rcx <= stage.length-2) tile = { type: '_', data: tiledata['_'] };
+    //         else tile = { type: 'ground', data: tiledata['ground'] };
+    //     }
+
+    //     return tile;
+    // }
 
     /** Player animations handler */
     animations() {
+        // let tex = this.textures;
+        
         /* ----- Animate ----- */
         // Crouch
         if(this.crouching) {
-            this.s.textures = anim[`${this.player}_crouch`];
+            this.s.textures = anim[`${this.type}_${this.form}_crouch`];
         }
         // Jump
         else if(!this.grounded) {
-            if(!this.jump_ready) this.s.textures = anim[`${this.player}_small_jump`];
-            else this.s.textures = anim[`${this.player}_fall`];
+            if(!this.jump_ready) this.s.textures = anim[`${this.type}_${this.form}_jump`];
+            else this.s.textures = anim[`${this.type}_${this.form}_fall`];
         }
         // Turn
         else if(
             pressed[this.controls.right] && Math.sign(this.motion.x) == -1
             || pressed[this.controls.left] && Math.sign(this.motion.x) == 1
         ) {
-            this.s.textures = anim[`${this.player}_turning`];
+            this.s.textures = anim[`${this.type}_${this.form}_turning`];
         }
         // Run
         else if(pressed[this.controls.right] || pressed[this.controls.left]) {
-            if(this.s.textures != anim[`${this.player}_small_run`]) {
-                this.s.textures = anim[`${this.player}_small_run`];
+            if(this.s.textures != anim[`${this.type}_${this.form}_run`]) {
+                this.s.textures = anim[`${this.type}_${this.form}_run`];
                 playPauseSprite(this.s);
             }
             if(pressed[this.controls.run]) this.s.animationSpeed = 0.24;
@@ -264,31 +349,46 @@ class physicsObject {
         }
         // Still
         else {
-            this.s.textures = anim[`${this.player}_small_still`];
+            this.s.textures = anim[`${this.type}_${this.form}_still`];
         }
     }
 
     /** Player controls handler */
-    playerControls() {
+    playerControls(rider) {
         if(this.dead == true) return;
+
+        // Riding
+        if(pressed[this.controls.action]) this.unride();
+        if(this.riding) return this.riding.playerControls(rider || this);
 
         /* ----- Movement ----- */
         let acceleration = this.grounded ? this.accel_x : this.air_accel;
+        let jump = Math.abs(this.motion.x) > 2.8 ? this.jump_accel_super : this.jump_accel;
 
         // Run
-        if(pressed[this.controls.run] && !this.crouching) this.speed_x = this.run;
-        else this.speed_x = this.walk;
+        if(pressed[this.controls.run] && !this.crouching) {
+            this.speed_x = this.run;
+            this.usePower();
+        }
+        else {
+            this.speed_x = this.walk;
+            this.power_ready = true;
+        }
 
         // Jump
         if(pressed[this.controls.jump] && this.grounded && this.jump_ready) {
-            this.motion.y -= Math.abs(this.motion.x) > 2.8 ? this.jump_accel_super : this.jump_accel;
+            this.motion.y -= jump;
             this.jump_ready = false;
-        } else if(!pressed[' '] && this.grounded) {
-            this.jump_ready = true;
+            this.jumping = true;
+        }
+        // Reset jump
+        else if(!pressed[' ']) {
+            this.jumping = false;
+            if(this.grounded) this.jump_ready = true;
         }
         // Crouch
         if(pressed[this.controls.down] && this.grounded) this.crouching = true;
-        else if(this.crouching && this.grounded) this.crouching = false
+        else if(this.crouching && this.grounded && (this.form != 'small' && !tiledata[this.adj.up.type].collision)) this.crouching = false
         // Right
         if(pressed[this.controls.right]) {
             if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
@@ -299,17 +399,36 @@ class physicsObject {
             if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration;
             if(this.grounded) this.facing = -1;
         };
+        // Action
+        if(pressed[this.controls.action]) {
+            this.unride();
+        }
+    }
+
+    usePower() {
+        if(this.power_ready == false) return;
+        this.power_ready = false;
+        // if(this.form == 'small') return;
+        switch (this.form) {
+            case 'fire':
+                spawn('fireball', this.s.x, this.s.y);
+                break;
+            default:
+                break;
+        }
     }
 
     /** Simple AI. Walks back and forth */
     ai() {
-        if(this.dead == true) return;
+        console.log('e');
+        if(this.dead || this.riding || typeof this.topRider?.player == 'number') return;
+        if(this.ai_info.shell) return this.shell();
 
         /* ----- Movement ----- */
         let acceleration = this.grounded ? this.accel_x : this.air_accel;
 
         // Turn at ledge
-        if(this.control == 'ai_turn_at_ledge') {
+        if(this.ai_info.turn_at_ledge) {
             if(
                 tiledata[this.adj.under.type].collision && // must have block below
                 (this.s.x % 48 < 12 && !tiledata[this.adj.downleft.type].collision && this.facing == -1
@@ -317,17 +436,32 @@ class physicsObject {
             ) this.facing *= -1;
         }
 
-        // Right
-        if(this.facing == 1) {
-            if(this.motion.x < this.speed_x) this.motion.x += acceleration;
-        };
-        // Left
-        if(this.facing == -1) {
-            if(this.motion.x > this.speed_x*-1) this.motion.x -= acceleration;
-        };
+        // Bounce
+        if(this.ai_info.bounce) {
+            if(this.grounded) this.motion.y = this.jump_accel*-1;
+        }
 
-        if(this.colliding.l) this.facing = 1;
-        if(this.colliding.r) this.facing = -1;
+        // Dissipate at wall
+        if(this.ai_info.dissipate_at_wall) {
+            if(this.colliding.l || this.colliding.r) this.despawn();
+        }
+
+        // auto walk
+        if(this.ai_info.auto_walk) {
+            // Right
+            if(this.facing == 1) {
+                if(this.motion.x < this.speed_x) this.motion.x += acceleration;
+            };
+            // Left
+            if(this.facing == -1) {
+                if(this.motion.x > this.speed_x*-1) this.motion.x -= acceleration;
+            };
+        }
+
+        if(this.ai_info.turn_at_wall) {
+            if(this.colliding.l) this.facing = 1;
+            if(this.colliding.r) this.facing = -1;
+        }
     }
 
     /** Shell AI */
@@ -343,18 +477,17 @@ class physicsObject {
      */
     playerReaction(subject) {
         if(this.dead || subject.dead || !this.collision || !subject.collision) return;
-        let top = (this.s.y < subject.s.y - 24);
-        let side = (this.s.x < subject.s.x) ? 'left' : 'right';
+        let [top, side] = this.objectCollisionDirection(subject);
 
         // Per enemy behavior
         switch (subject.enemy) {
             // Player
-            case undefined:
+            case false:
                 if(top) {
                     this.bouncePlayer();
                 } else {
                     let dir = 'left' ? 1 : -1;
-                    this.s.x += dir;
+                    // this.motion.x = dir/4;
                 }
                 break;
             // Goomba, Koopa
@@ -364,6 +497,7 @@ class physicsObject {
                     this.bouncePlayer();
                     subject.death(this);
                 } else this.death();
+                // this.ride(subject);
                 break;
             // Shell
             case 'shell':
@@ -376,15 +510,22 @@ class physicsObject {
                 }
                 else if(!top) this.death();
                 break;
-            // Powerup
+            // Powerupm
             case 'powerup':
                 let power = subject.type;
-                console.log(power);
                 subject.despawn();
+                console.log(power, this.form);
+                this.form = power;
                 break;
             default:
                 break;
         }
+    }
+
+    objectCollisionDirection(subject) {
+        let top = (this.s.y < subject.s.y - 24);
+        let side = (this.s.x < subject.s.x) ? 'left' : 'right';
+        return [top, side];
     }
 
     /** Interaction between 2 non-player objects */
@@ -392,31 +533,59 @@ class physicsObject {
         let actor, actee;
         if(this.dead || subject.dead) return;
 
-        if(this.enemy == 'shell' && subject.enemy == 'shell') { // Both shells
-            actor = subject; actee = this;
-            // subject.death(this, Math.sign(subject.motion.x));
+        if(this.enemy == 'goomba' && subject.enemy == 'goomba') {
+            let [top, side] = this.objectCollisionDirection(subject);
+            let [otop, oside] = subject.objectCollisionDirection(this);
+            if(top && !this.riding) this.ride(subject);
+            else if(otop && !subject.riding) subject.ride(this);
         }
-        else if(this.enemy == 'shell') { actor = this; actee = subject; }
-        else if(subject.enemy == 'shell') { actor = subject; actee = this; }
-        else return; // No interaction
+        else if(this.enemy == 'shell' && subject.enemy == 'shell') { // Both shells
+            let dir = this.objectCollisionDirection(subject)[1];
+            if(this.motion.x == 0 && subject.motion.x != 0) this.genericDeathAnimation(dir === 'left' ? 1 : -1);
 
-        if(this.enemy == 'powerup')
+            // actor = subject; actee = this;
+            // subject.death(this, Math.sign(subject.motion.x));
+            // actee.death(actor, Math.sign(actor.motion.x));
+        }
+        else if(this.enemy == 'shell') {
+            actor = this; actee = subject;
+            actee.death(actor, Math.sign(actor.motion.x));
+        }
+        else if(subject.enemy == 'shell') {
+            actor = subject; actee = this;
+            actee.death(actor, Math.sign(actor.motion.x));
+        }
 
-        console.log('test');
-        actee.death(actor, Math.sign(actor.motion.x));
+        // if(this.enemy == 'powerup')
+    }
+
+    /** Attaches an object to the top of another object */
+    ride(subject) {
+        if(this.riding || subject.rider) return;
+        this.riding = subject;
+        subject.topRider = this.topRider ? this.topRider : this;
+        subject.rider = this;
+    }
+    unride() {
+        if(!this.riding) return;
+        delete this.riding.topRider;
+        delete this.riding.rider;
+        delete this.riding;
+        this.bouncePlayer(0, -6, false);
     }
 
     /** Bounce off enemy/object */
-    bouncePlayer() {
-        let upward = -3;
-        if(pressed[this.controls.jump]) upward = -7;
-        this.motion.y = upward;
+    bouncePlayer(x=0, y=-3, allow_high_bounce=true) {
+        if(allow_high_bounce) this.jumping = true;
+        if(pressed[this.controls.jump]) y = -6;
+        this.motion.y = y;
+        if(x != 0) this.motion.x = x;
     }
 
     /** Player death */
     deathPlayer() {
         this.animate_by_state = false;
-        this.s.textures = anim[`${this.player}_dead`];
+        this.s.textures = anim[`${this.type}_dead`];
         this.collision = false;
         this.doMotion = false;
 
@@ -447,7 +616,9 @@ class physicsObject {
 
     /** Non-player death */
     death(source={}, dir=0) {
+        if(this.rider) this.rider.unride();
         this.dead = true;
+
         if(this.player != false) return this.deathPlayer();
         this.motion.x = 0;
         switch (this.enemy) {
@@ -474,7 +645,7 @@ class physicsObject {
                 this.genericDeathAnimation(dir);
             default:
                 this.despawn();
-                console.warn('default despawn')
+                console.warn('default despawn');
                 // this.genericDeathAnimation(dir);
                 break;
         }
@@ -482,6 +653,7 @@ class physicsObject {
 
     /** Generic death animation */
     genericDeathAnimation(dir=-1) {
+        if(this.rider) this.rider.unride();
         this.dead = true;
         this.collision = false;
         this.motion.x = 2*dir;
@@ -492,6 +664,7 @@ class physicsObject {
 
     /** Despawn */
     despawn() {
+        if(this.rider) this.rider.unride();
         app.stage.removeChild(this.s); // Delete PIXI sprite
         let index = physicsObjects.findIndex(obj => obj === this);
         physicsObjects.splice(index, 1); // Remove from physicsObjects list
@@ -671,7 +844,7 @@ function spawn(name='goomba', x=0, y=0, data={}) {
 function collectCoin(visual=false, x, y) {
     if(visual == true) {
         spawn('particle', x, y, {
-            motion: { x: 0, y: -6, r: 0, }, texture: 'coin', lifespan: 600,
+            motion: { x: 0, y: -5, r: 0, }, texture: 'coin_collect', lifespan: 500,
         });
     }
     world.coins++;
@@ -743,8 +916,7 @@ function gameTick(delta, repeat=false) {
     for(object of physicsObjects) {
         if(object.doMotion) object.physics();
         if(object.control == 'player') object.playerControls();
-        else if(object.control.startsWith('ai')) object.ai();
-        else if(object.control == 'shell') object.shell();
+        else if(object.ai_info) object.ai();
         if(object.animate_by_state) object.animations();
     }
 
@@ -758,7 +930,7 @@ function gameTick(delta, repeat=false) {
             if(!one.collision || !two.collision) continue;
 
             // Pythagorean theorem
-            if(distance(one, two)[0] <= 48) {
+            if(distance(one, two)[0] <= one.s.width/2 + two.s.width/2) { // 48 if both are 48 wide
                 let player = false;
                 let nonplayer = false;
                 if(one.player != false) { player = one; nonplayer = two; }
@@ -901,7 +1073,10 @@ document.querySelector('canvas').addEventListener('wheel', event => {
     app.stage.scale.y = factor;
 })
 
+// Page loses focus
+window.onblur = () => { pressed = {}; }
+
 // beforeunload
-window.onbeforeunload = event => {
-    alert("Unsaved changes will be lost"); //Gecko + Webkit, Safari, Chrome etc.
-}
+// window.onbeforeunload = event => {
+//     alert("Unsaved changes will be lost"); //Gecko + Webkit, Safari, Chrome etc.
+// }

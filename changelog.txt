@@ -1,15 +1,33 @@
+v0.5
+- Bricks now correctly act as containers
+- Jump height is now dependant on how long the jump button is held for
+- Support for entity riding. Goombas will now form a stack when placed above one another
+- Collision for 2 tall sprites
+- Mushroom works now
+- Players now bounce off of each other's heads
+- General improvements to collision
+    + You can now stand on the edge of a block
+    + You can collide into the bottom of multiple tiles at once
+    + Clipping into blocks horizontally is now harder
+- Tiles
+    + Coin
+- Objects
+    + Flower
+    + Fireball
+
+
 v0.4
 - Basic touchscreen controls
 - Interactions with bricks and ? boxes
 - Ability to put items into containers (no visual feedback yet)
 - Coin counter and coins in containers by default (no coin tiles yet)
 - Overhauled the way object properties are handled, the spawn function can now override properties like texture and motion
-- Fixes:
+- Fixes
     + Fixed tiles not animating correctly when importing a level
     + Fixed turn_at_ledge ai turning in midair
     + Fixed objects with collision disabled still interacting with other objects
     + Generic fixes to shell physics
-- Tiles:
+- Tiles
     + Invisible Block
     + Spikes
 - Objects
@@ -22,7 +40,6 @@ New
     + 1-1
 - Playable characters
     + Luigi
-
 
 
 v0.3
@@ -46,6 +63,7 @@ v0.3
     + Koopa
     + Shell
 
+
 v0.2
 - Interactions between the player and enemies
 - Basic horizontal camera panning
@@ -58,6 +76,7 @@ v0.2
     + Brick
     + Question box
     + Bush
+
 
 v0.1
 - Collision

@@ -1,12 +1,13 @@
 * {
     box-sizing: border-box;
     image-rendering: pixelated;
-}
-*[role="button"], input[type="button"], button {
-    cursor: pointer;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
+}
+*[role="button"], input[type="button"], button {
+    cursor: pointer;
 }
 
 body {
@@ -23,12 +24,17 @@ canvas {
     /* object-fit: contain; */
 }
 
-
-table tr td {
+table {
+    margin-bottom: 12px;
+}
+table td, table th {
     min-width: 96px;
+    padding: 1px 3px;
+    margin: 0;
 }
 table * {
     text-align: left;
+    border: 1px solid rgb(83, 83, 83);
 }
 
 .tools {
@@ -58,10 +64,18 @@ table * {
 
 /* Touch controls */
 .controls {
-    position: fixed;
-    bottom: 6px; right: 6px;
-    background-color: rgb(65, 65, 65);
+    position: sticky;
+    justify-content: center;
+
+    bottom: 6px; left: 12px; right: 12px;
+    background-color: rgb(48, 48, 48);
+    border: 1px solid rgb(82, 82, 82);
+    border-radius: 8px;
+
+    width: auto;
     padding: 12px 0;
+    margin-top: 24px;
+    margin-left: auto;
 }
 .controls .column {
     margin: 0 16px;
@@ -139,6 +153,14 @@ table * {
 /* Button pad */
 .controls .buttonpad button {
     border-radius: 50%;
-    width: 42px;
-    height: 42px;
+    width: 46px;
+    height: 46px;
+}
+
+/* Desktop layout */
+@media only screen and (min-width: 600px) {
+    .controls {
+        left: unset;
+        width: fit-content;
+    }
 }
