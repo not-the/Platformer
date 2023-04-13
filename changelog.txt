@@ -1,3 +1,24 @@
+v0.6
+- Off-screen tiles are now culled (horizontally only)
+- Off-screen objects are now frozen and culled
+- Flower functionality
+- Damage sources no longer instantly kill the player
+- Invinicibility period after taking damage
+- Coins and multi coins can now be inserted into containers
+- Importing/exporting levels now saves container data
+- Fixes
+    + Fixed vertical collision for 2 tall sprites
+    + Fixed block collision not being updated when a tile is set via the .set() method
+    + Fixed tile offset bug from running a tile animation before the last one was finished
+    + Fixed 2-tall sprites not sending collide/inside events
+- Tiles
+    + Multi coin
+- Objects
+    + Mount
+- Structures
+    + Castle
+
+
 v0.5
 - Bricks now correctly act as containers
 - Jump height is now dependant on how long the jump button is held for

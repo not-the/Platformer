@@ -48,7 +48,8 @@ function exportLevel() {
         let row = stage[i];
         let outrow = output.level[i];
         for(k in row) {
-            outrow.push(row[k].type);
+            if(row[k].contains) outrow.push(`${row[k].type}/c/${row[k].contains}`)
+            else outrow.push(row[k].type);
         }
     }
     for(obj of physicsObjects) {
@@ -64,15 +65,16 @@ function exportLevel() {
 class physicsObject {
     constructor(
         data = {},
-        additional_data={}
+        additional_data={},
+        data_referential={},
     ) {
         // Stack data
         let combined = {
-            ...clone(objectTemplate.default),
-            ...clone(data),
-            ...clone(additional_data),
+            ...clone(objectTemplate.default), // Defaults
+            ...clone(data), // Object template
+            ...clone(additional_data), // Overrides
+            ...data_referential, // Not cloned, properties can be references
         }
-
         for(const key in combined) {
             let value = combined[key];
             this[key] = value;
@@ -85,9 +87,10 @@ class physicsObject {
         this.grounded = false;
         this.jump_ready = true;
         this.jumping = false;
-        // this.jump_duration = 0;
         this.crouching = false;
         this.power_ready = true;
+        this.power_anim = 0;
+        this.projectiles = 0;
         this.colliding = {
             u: false, r: false, l: false,
         }
@@ -99,22 +102,42 @@ class physicsObject {
         // Render
         spriteFix(this.s, this.big_sprite);
         [this.s.x, this.s.y] = convertCoord(data.x, data.y);
-        this.s.animationSpeed = 0.08;
+        this.s.animationSpeed = this.animation_speed || 0.08;
         playPauseSprite(this.s);
 
         physicsObjects.push(this);
         app.stage.addChild(this.s);
-        // console.log(this);
 
         if(this.lifespan) setTimeout(() => {
-            this.despawn();
+            this.death();
         }, this.lifespan);
+    }
+
+    tick() {
+        // if(this.invincible > 0 && cycle % 30 > 15) {
+        //     this.s.opacity = 0;
+        // } else this.s.opacity = 1;
+
+        if(this.unloaded || !this.s.visible) return;
+        if(this.doMotion) this.physics();
+        if(this.control == 'player') this.playerControls();
+        else if(this.ai_info) this.ai();
+        if(this.animate_by_state) this.animations();
+    }
+
+    load(state) {
+        // this.unloaded = !state;
+        this.s.visible = state;
+        if(this.ai_info?.despawn_on_unload && !state) this.death();
     }
 
     /** Collision */
 
     /** Physics */
     physics() {
+        // Ticking
+        if(this.invincible > 0) this.invincible--;
+
         // Riding
         if(this.riding) {
             const ride = this.riding;
@@ -215,7 +238,7 @@ class physicsObject {
             this.grounded = false;
         } else if(this.s.y >= ground) {
             // Halt
-            if(!this.grounded) {
+            if(!this.grounded && this.collision) {
                 this.s.y = ground;
                 this.motion.y = 0;
                 this.grounded = true;
@@ -230,15 +253,21 @@ class physicsObject {
 
         let allowXMotion = true;
         let allowYMotion = true;
+        let tall = (this.form != 'small' && !this.crouching);
 
         // Vertical from below
         if(this.s.y % 48 > 36 && Math.sign(this.motion.y) == -1)  {
             let left = (adj.upleft.data.collision && this.s.x % 48 < 16);
             let right = (adj.upright.data.collision && this.s.x % 48 > 32);
+            let left2 = (adj.upleft2.data.collision && this.s.x % 48 < 16);
+            let up2 = (adj.up2.data.collision);
+            let right2 = (adj.upright2.data.collision && this.s.x % 48 > 32);
+
             if(
-                tiledata[adj.up.type].collision
-                || left // Downleft
-                || right // Upright
+                // !this.collision && 
+                ( (tall && (left2 || up2 || right2))
+                ||
+                (!tall && tiledata[adj.up.type].collision || left || right ) )
             ) {
                 allowYMotion = false;
                 this.colliding.u = true;
@@ -246,6 +275,11 @@ class physicsObject {
             adj.up.data.collide('b', adj.up, this);
             if(left) adj.upleft.data.collide('b', adj.upleft, this);
             if(right) adj.upright.data.collide('b', adj.upright, this);
+            if(tall) {
+                if(left2) adj.upleft2.data.collide('b', adj.upleft2, this);
+                if(up2) adj.up2.data.collide('b', adj.up2, this);
+                if(right2) adj.upright2.data.collide('b', adj.upright2, this);
+            }
         }
         else this.colliding.u = false;
 
@@ -256,26 +290,28 @@ class physicsObject {
             if(Math.sign(this.motion.x) != 1) {
                 if(
                     tiledata[adj.left.type].collision
-                    || (this.form != 'small' && tiledata[adj.upleft.type].collision && !this.crouching)
+                    || (tall && tiledata[adj.upleft.type].collision)
                 ) {
                     allowXMotion = false;
                     this.colliding.l = true;
                     this.s.x = (adj.left.x + 48) || this.s.x;
                 }
                 adj.left.data.collide('r', adj.left, this);
+                if(tall) adj.upleft.data.collide('r', adj.upleft, this);
             }
         } else this.colliding.l = false;
         if(this.s.x % 48 > 24) { // Right wall
             if(Math.sign(this.motion.x) != -1) {
                 if(
                     tiledata[adj.right.type].collision
-                    || (this.form != 'small' && tiledata[adj.upright.type].collision && !this.crouching)
+                    || (tall && tiledata[adj.upright.type].collision)
                 ) {
                     allowXMotion = false;
                     this.colliding.r = true;
                     this.s.x = (adj.right.x - 48) || this.s.x;
                 }
                 adj.right.data.collide('l', adj.right, this);
+                if(tall) adj.upright.data.collide('l', adj.upright, this);
             }
         } else this.colliding.r = false;
 
@@ -295,12 +331,14 @@ class physicsObject {
 
         // Inside block
         if(
-            this.collision && (tiledata[adj.inside.type].collision
-            || (this.form != 'small' && tiledata[adj.up.type].collision && !this.crouching))
+            this.collision &&
+                (tiledata[adj.inside.type].collision ||
+                    (tall && tiledata[adj.up.type].collision))
         ) {
             this.s.x += - 1 * Math.sign(this.s.scale.x);
         }; // Move back if stuck in a block
         adj.inside.data.collide('in', adj.inside, this); // Inside
+        if(tall) adj.up.data.collide('in', adj.up, this); // Inside
     }
 
     // getAdjacent(off_x=0, off_y=0) {
@@ -319,11 +357,19 @@ class physicsObject {
 
     /** Player animations handler */
     animations() {
-        // let tex = this.textures;
         
         /* ----- Animate ----- */
+        // Override
+        if(this.sprite_override) {
+            this.s.textures = anim[this.sprite_override];
+        }
+        // Using power
+        else if(this.power_anim > 0) {
+            this.s.textures = anim[`${this.type}_${this.form}_throw`];
+            this.power_anim--;
+        }
         // Crouch
-        if(this.crouching) {
+        else if(this.crouching) {
             this.s.textures = anim[`${this.type}_${this.form}_crouch`];
         }
         // Jump
@@ -388,7 +434,7 @@ class physicsObject {
         }
         // Crouch
         if(pressed[this.controls.down] && this.grounded) this.crouching = true;
-        else if(this.crouching && this.grounded && (this.form != 'small' && !tiledata[this.adj.up.type].collision)) this.crouching = false
+        else if(this.crouching && this.grounded && !(this.form != 'small' && tiledata[this.adj.up.type].collision)) this.crouching = false;
         // Right
         if(pressed[this.controls.right]) {
             if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
@@ -411,7 +457,13 @@ class physicsObject {
         // if(this.form == 'small') return;
         switch (this.form) {
             case 'fire':
-                spawn('fireball', this.s.x, this.s.y);
+                if(this.projectiles >= 2) return;
+                this.power_anim = 15;
+                // Turn around
+                if(pressed[this.controls.left]) this.facing = -1;
+                if(pressed[this.controls.right]) this.facing = 1;
+                spawn('fireball', this.s.x+this.facing*24, this.s.y-24, {facing: this.facing, lifespan: 7000 }, { owner: this });
+                this.projectiles++;
                 break;
             default:
                 break;
@@ -420,7 +472,6 @@ class physicsObject {
 
     /** Simple AI. Walks back and forth */
     ai() {
-        console.log('e');
         if(this.dead || this.riding || typeof this.topRider?.player == 'number') return;
         if(this.ai_info.shell) return this.shell();
 
@@ -443,7 +494,7 @@ class physicsObject {
 
         // Dissipate at wall
         if(this.ai_info.dissipate_at_wall) {
-            if(this.colliding.l || this.colliding.r) this.despawn();
+            if(this.colliding.l || this.colliding.r) this.death();
         }
 
         // auto walk
@@ -495,8 +546,8 @@ class physicsObject {
             case 'koopa':
                 if(top) {
                     this.bouncePlayer();
-                    subject.death(this);
-                } else this.death();
+                    subject.damage(this);
+                } else this.damage();
                 // this.ride(subject);
                 break;
             // Shell
@@ -508,14 +559,31 @@ class physicsObject {
                 } else if(subject.motion != 0 && top) {
                     subject.motion.x = 0; // Stop when bouncing
                 }
-                else if(!top) this.death();
+                else if(!top) this.damage();
                 break;
-            // Powerupm
+            // Mount
+            case 'mount':
+                if(top && Math.sign(this.motion.y) == 1) this.ride(subject);
+                break;
+            // Powerup
             case 'powerup':
                 let power = subject.type;
                 subject.despawn();
-                console.log(power, this.form);
+                if(this.form != 'small' && power == 'big') return;
+                if(this.form != power) {
+                    world.paused = true;
+                    setTimeout(() => {
+                        world.paused = false;
+                        // this.sprite_override = undefined;
+                    }, 500);
+                }
                 this.form = power;
+                // this.sprite_override = 'powering_up';
+                break;
+            case 'life':
+                subject.despawn();
+                this.lives++;
+                updateHud();
                 break;
             default:
                 break;
@@ -549,11 +617,22 @@ class physicsObject {
         }
         else if(this.enemy == 'shell') {
             actor = this; actee = subject;
-            actee.death(actor, Math.sign(actor.motion.x));
+            actee.damage(actor, Math.sign(actor.motion.x));
         }
         else if(subject.enemy == 'shell') {
             actor = subject; actee = this;
-            actee.death(actor, Math.sign(actor.motion.x));
+            actee.damage(actor, Math.sign(actor.motion.x));
+        }
+
+        else if(this.enemy == 'fireball' && subject.enemy != 'fireball') {
+            actor = this; actee = subject;
+            actor.damage();
+            actee.damage(actor, Math.sign(actor.motion.x));
+        }
+        else if(subject.enemy == 'fireball' && this.enemy != 'fireball') {
+            actor = subject; actee = this;
+            actor.damage();
+            actee.damage(actor, Math.sign(actor.motion.x));
         }
 
         // if(this.enemy == 'powerup')
@@ -580,6 +659,23 @@ class physicsObject {
         if(pressed[this.controls.jump]) y = -6;
         this.motion.y = y;
         if(x != 0) this.motion.x = x;
+    }
+
+    /** Damage */
+    damage(source={}, dir=0) {
+        if(this.invincible > 0) return;
+        if(this.rider) this.rider.unride();
+
+        if(this.form == 'small') return this.death(source, dir);
+        else if(this.form == 'big') this.form = 'small';
+        else this.form = 'big';
+        this.invincible = 120;
+        // this.sprite_override = 'powering_up';
+        world.paused = true;
+        setTimeout(() => {
+            world.paused = false;
+            // this.sprite_override = undefined;
+        }, 500);
     }
 
     /** Player death */
@@ -616,7 +712,6 @@ class physicsObject {
 
     /** Non-player death */
     death(source={}, dir=0) {
-        if(this.rider) this.rider.unride();
         this.dead = true;
 
         if(this.player != false) return this.deathPlayer();
@@ -643,9 +738,13 @@ class physicsObject {
                 break;
             case 'shell':
                 this.genericDeathAnimation(dir);
+            case 'fireball':
+                spawn('particle', this.s.x, this.s.y, { texture: 'fire_poof', doMotion: false, animation_speed: 0.2, lifespan: 200, });
+                this.despawn();
+                break;
             default:
                 this.despawn();
-                console.warn('default despawn');
+                // console.warn('default despawn');
                 // this.genericDeathAnimation(dir);
                 break;
         }
@@ -656,15 +755,16 @@ class physicsObject {
         if(this.rider) this.rider.unride();
         this.dead = true;
         this.collision = false;
-        this.motion.x = 2*dir;
+        this.motion.x = 3*dir;
         this.motion.y = -4;
-        this.motion.r = 2*dir;
+        this.motion.r = 5*dir;
         setTimeout(() => { this.despawn(); }, 3000);
     }
 
     /** Despawn */
     despawn() {
         if(this.rider) this.rider.unride();
+        if(this.owner) this.owner.projectiles--;
         app.stage.removeChild(this.s); // Delete PIXI sprite
         let index = physicsObjects.findIndex(obj => obj === this);
         physicsObjects.splice(index, 1); // Remove from physicsObjects list
@@ -677,14 +777,13 @@ class physicsObject {
 
 
 /** Creates and returns a tile */
-function tile(type='ground', x=0, y=0) {
-    let s;
-    alterTile(type, true);
+function tile(type='ground', x=0, y=0, contained) {
+    let s = alterTile(undefined, type, true);
     app.stage.addChild(s);
     return s;
 
     /** Tile handler */
-    function alterTile(type, firstTime=false) {
+    function alterTile(s, type, firstTime=false) {
         const data = tiledata[type];
         if(firstTime) {
             s = new PIXI.AnimatedSprite(data.texture);
@@ -695,11 +794,18 @@ function tile(type='ground', x=0, y=0) {
             s.on('pointerdown', () => { draw(undefined, true); });
             s.on('mouseover', draw);
         }
-        else s.textures = data.texture;
+
+        // Insert coin
+        if(data?.insertable && s.data.container) return s.contains = type;
+
+        // Replace
+        if(!firstTime) s.textures = data.texture;
         s.data = data;
         s.type = type;
-        s.contains = data.contains;
+        s.contains = contained || data.contains;
+        s.time_origin = undefined;
         if(data.animated) { s.animationSpeed = data.animated; playPauseSprite(s); }
+        return s;
     }
 
     /** Editor click */
@@ -708,19 +814,14 @@ function tile(type='ground', x=0, y=0) {
         let value = drawSel.value;
         let [space, name] = value.split('/');
         if(space == 'tile') {
-            alterTile(name);
+            alterTile(s, name);
         }
         // Build structure
         else if(space == 'structure') {
             const struct = structures[name];
             for(step of struct) {
                 let tile = stage[x][y];
-                if(tile != false) {
-                    let data = tiledata[step.tile];
-                    tile.type = step.tile;
-                    s.contains = data.contains; 
-                    tile.textures = data.texture;
-                }
+                alterTile(tile, step.tile);
                 x += step.move[0];
                 y += step.move[1];
             }
@@ -774,7 +875,8 @@ function importLevel(url=false) {
             stage.push([]);
             for(vi = 0; vi < level[hi].length; vi++) {
                 let block = level[hi][vi];
-                stage[hi].push(tile(block, hi, vi));
+                let [name, datatype, data] = block.split('/');
+                stage[hi].push(tile(name, hi, vi, data));
             }
         }
 
@@ -824,8 +926,8 @@ function resizeLevel(dir) {
 
 
 /** Spawn object */
-function spawn(name='goomba', x=0, y=0, data={}) {
-    let o = new physicsObject(objectTemplate[name], data);
+function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
+    let o = new physicsObject(objectTemplate[name], data, data_referential);
     o.s.x = x;
     o.s.y = y;
 
@@ -899,26 +1001,22 @@ function gameTick(delta, repeat=false) {
     }
 
     // Cheats
-    // if(pressed['arrowright'] || pressed['arrowleft'] || pressed['arrowup'] || pressed['arrowdown']) cheats.freecam = true;
-    // if(cheats.freecam) {
-    //     if(pressed['arrowright']) app.stage.x += -4;
-    //     if(pressed['arrowleft']) app.stage.x += 4;
-    //     if(pressed['arrowup']) app.stage.y += 4;
-    //     if(pressed['arrowdown']) app.stage.y += -4;
-    // }
+    if(pressed['arrowright'] || pressed['arrowleft'] || pressed['arrowup'] || pressed['arrowdown']) cheats.freecam = true;
+    if(cheats.freecam) {
+        if(pressed['arrowright']) app.stage.x += -4;
+        if(pressed['arrowleft']) app.stage.x += 4;
+        if(pressed['arrowup']) app.stage.y += 4;
+        if(pressed['arrowdown']) app.stage.y += -4;
+    }
 
     if(world.paused) return;
 
     // UI (temporary)
     hudLives.x = (app.stage.x*-1) + 12;
+    hudLives.y = -48;
 
     // Physics
-    for(object of physicsObjects) {
-        if(object.doMotion) object.physics();
-        if(object.control == 'player') object.playerControls();
-        else if(object.ai_info) object.ai();
-        if(object.animate_by_state) object.animations();
-    }
+    for(object of physicsObjects) object.tick();
 
 
     // Touch detection
@@ -945,13 +1043,18 @@ function gameTick(delta, repeat=false) {
     }
 
     // Camera panning
+    let range = [0, 25]; // 0-24 is the screen
     if(player1.s.x >= app.view.width * 3/5 && !cheats.freecam) {
-        // console.log('pan');
-        app.stage.x = (player1.s.x * -1) + app.view.width * 3/5;
+        let pos = (player1.s.x * -1) + app.view.width * 3/5;
+        if(app.stage.scale.x == 1) app.stage.x = pos;
+
+        // Update rendered space
+        let left = Math.floor(convertCoord(pos*-1, 0, true)[0]);
+        range = [left-2, left+27];
     }
 
     // Animated tiles
-    for(i in animatingTiles) {        
+    for(i in animatingTiles) {       
         // Animate
         let item = animatingTiles[i];
         if(item.animation == 'bounce') {
@@ -968,6 +1071,23 @@ function gameTick(delta, repeat=false) {
         item.tile.x = item.origin.x;
         item.tile.y = item.origin.y;
     }
+
+    // Tile Culling
+    for(let i in stage) {
+        let col = stage[i];
+        let state = (i >= range[0] && i <= range[1]);
+        for(let item of col) {
+            item.visible = state;
+        }
+    }
+
+    // Object unloading
+    for(object of physicsObjects) {
+        let state = (object.s.x >= (range[0]-6) * 48 && object.s.x <= (range[1]+6) * 48);
+        object.load(state);
+    }
+
+
 
     // Debug
     document.getElementById('debug').innerHTML = `

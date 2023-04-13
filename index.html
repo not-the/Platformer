@@ -24,7 +24,7 @@
     <!-- Tools -->
     <div class="tools">
         Draw:
-        <select name="drawtile" id="drawtile">
+        <select name="drawtile" id="drawtile" style="min-width: 240px">
             <option value="tile/_" selected>erase</option>
             <option value="tile/ground">ground</option>
             <option value="tile/hard">hard</option>
@@ -33,6 +33,7 @@
             <option value="tile/invis_question">invis_question</option>
             <option value="tile/used">used</option>
             <option value="tile/coin">coin</option>
+            <option value="tile/multi_coin">multi_coin</option>
             <option value="tile/bush">bush</option>
             <option value="tile/bush_med">bush_med</option>
             <option value="tile/bush_large">bush_large</option>
@@ -42,21 +43,38 @@
             <option value="tile/hill">hill</option>
             <option value="tile/hill_large">hill_large</option>
             <option value="tile/spikes">spikes</option>
+
+            <option disabled>--- Pipe ---</option>
             <option value="tile/pipe_top_l">pipe_top_l</option>
             <option value="tile/pipe_top_r">pipe_top_r</option>
             <option value="tile/pipe_l">pipe_l</option>
             <option value="tile/pipe_r">pipe_r</option>
             <option value="structure/pipe">PIPE</option>
             <option value="structure/pipe_neck">PIPE_NECK</option>
+
+            <option disabled>--- BG Bricks ---</option>
+
+            <option value="tile/black">black</option>
+            <option value="tile/bg_brick">bg_brick</option>
+            <option value="tile/bg_brick_door">bg_brick_door</option>
+            <option value="tile/bg_brick_mid">bg_brick_mid</option>
+            <option value="tile/bg_brick_top">bg_brick_top</option>
+            <option value="tile/brick_window_l">brick_window_l</option>
+            <option value="tile/brick_window_r">brick_window_r</option>
+            <option value="structure/castle">brick_window_r</option>
+
             <option disabled>--- OBJECTS ---</option>
             <option value="object/mario">mario</option>
             <option value="object/luigi">luigi</option>
+            <option value="object/mount">mount</option>
             <option value="object/goomba">goomba</option>
             <option value="object/koopa">koopa</option>
             <option value="object/shell">shell</option>
             <option value="object/red_koopa">red_koopa</option>
             <option value="object/red_shell">red_shell</option>
             <option value="object/mushroom">mushroom</option>
+            <option value="object/life">life</option>
+            <option value="object/star">star</option>
             <option value="object/flower">flower</option>
             <option value="object/fireball">fireball</option>
             <option value="object/particle">particle</option>
@@ -69,9 +87,11 @@
         <img src="./assets/ui/invis.png" alt="question" role="button" data-value="tile/invis_question" onclick="setEditorTool()">
         <img src="./assets/tile/used.png" alt="question" role="button" data-value="tile/used" onclick="setEditorTool()">
         <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/coin" onclick="setEditorTool()">
+        <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/multi_coin" onclick="setEditorTool()">
         <img src="./assets/tile/spikes.png" alt="question" role="button" data-value="tile/spikes" onclick="setEditorTool()">
         <img src="./assets/tile/pipe_top_l.png" alt="Eraser" role="button" data-value="structure/pipe" onclick="setEditorTool()">
         <img src="./assets/tile/pipe_l.png" alt="" role="button" data-value="structure/pipe_neck" onclick="setEditorTool()">
+        <img src="./assets/decoration/bg_brick_top.png" alt="" role="button" data-value="structure/castle" onclick="setEditorTool()">
         <br/>
         <img src="./assets/decoration/bush.png" alt="bush" role="button" data-value="tile/bush" onclick="setEditorTool()">
         <img src="./assets/decoration/bush_med.png" alt="bush_med" role="button" data-value="tile/bush_med" onclick="setEditorTool()">
@@ -85,6 +105,7 @@
 
         <img src="./assets/player1/player.png" alt="" role="button" data-value="object/mario" onclick="setEditorTool()">
         <img src="./assets/player2/player.png" alt="" role="button" data-value="object/luigi" onclick="setEditorTool()">
+        <img src="./assets/entity/mount/still.png" alt="" role="button" data-value="object/mount" onclick="setEditorTool()">
         <img src="./assets/enemy/goomba.png" alt="" role="button" data-value="object/goomba" onclick="setEditorTool()">
         <img src="./assets/enemy/koopa1.png" alt="" role="button" data-value="object/koopa" onclick="setEditorTool()">
         <img src="./assets/enemy/shell.png" alt="" role="button" data-value="object/shell" onclick="setEditorTool()">
@@ -92,6 +113,8 @@
         <img src="./assets/enemy/red_shell.png" alt="" role="button" data-value="object/red_shell" onclick="setEditorTool()">
 
         <img src="./assets/item/mushroom.png" alt="" role="button" data-value="object/mushroom" onclick="setEditorTool()">
+        <img src="./assets/item/life.png" alt="" role="button" data-value="object/life" onclick="setEditorTool()">
+        <img src="./assets/item/life.png" alt="" role="button" data-value="object/star" onclick="setEditorTool()">
         <img src="./assets/item/flower1.png" alt="" role="button" data-value="object/flower" onclick="setEditorTool()">
 
         <img src="./assets/item/fireball1.png" alt="" role="button" data-value="object/fireball" onclick="setEditorTool()">

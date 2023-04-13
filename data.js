@@ -25,7 +25,7 @@ const objectTemplate = {
         type: 'default',
         player: false,
         enemy: false,
-        control: '',
+        ai_info: false,
 
         doMotion: true,
         collision: true,
@@ -114,6 +114,33 @@ const objectTemplate = {
     
         facing: 1,
     },
+
+    // Entity
+    'mount': {
+        texture: 'mount',
+    
+        type: 'mount',
+        enemy: 'mount',
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+        animate_by_state: false,
+    
+        // x: 3,
+        // y: 11,
+    
+        accel_x: 0.075,
+        air_accel: 0.075,
+        walk: 2.5,
+        run: 5,
+        jump_accel: 6.4,
+        jump_accel_super: 7,
+        // traction: 1,
+        // air_traction: 1,
+    },
+
+    // Enemies
     'goomba': {
         texture: 'goomba',
 
@@ -291,13 +318,43 @@ const objectTemplate = {
         facing: 1,
         no_mirror: true,
     },
+    'life': {
+        texture: 'life',
+
+        type: 'life',
+        player: false,
+        enemy: 'life',
+        ai_info: {
+            auto_walk: true,
+            turn_at_wall: true,
+            turn_at_ledge: false,
+            dissipate_at_wall: false,
+        },
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+        animate_by_state: false,
+        traction: 1,
+        air_traction: 1,
+
+        accel_x: 0.5,
+        air_accel: 0,
+        walk: 1,
+        run: 2,
+        jump_accel: 4,
+        jump_accel_super: 4,
+
+        facing: 1,
+        no_mirror: true,
+    },
     'flower': {
         texture: 'flower',
 
         type: 'fire',
         player: false,
         enemy: 'powerup',
-        // control: 'ai',
+        tiered_powerup: true,
 
         doMotion: true,
         collision: true,
@@ -317,6 +374,35 @@ const objectTemplate = {
         facing: 1,
         no_mirror: true,
     },
+    'star': {
+        texture: 'life',
+
+        type: 'star',
+        player: false,
+        enemy: 'star',
+        ai_info: {
+            auto_walk: true,
+            bounce: true,
+            turn_at_wall: true,
+            turn_at_ledge: false,
+            dissipate_at_wall: false,
+        },
+
+        doMotion: true,
+        collision: true,
+        friction: false,
+        animate_by_state: false,
+        traction: 1,
+        air_traction: 1,
+
+        accel_x: 0.5,
+        air_accel: 0,
+        walk: 2,
+        jump_accel: 6,
+
+        facing: 1,
+        no_mirror: true,
+    },
 
     // Projectile
     'fireball': {
@@ -326,11 +412,12 @@ const objectTemplate = {
         player: false,
         enemy: 'fireball',
         ai_info: {
-            bounce: true,
             auto_walk: true,
+            bounce: true,
             turn_at_wall: false,
             turn_at_ledge: false,
             dissipate_at_wall: true,
+            despawn_on_unload: true,
         },
 
         doMotion: true,
@@ -355,7 +442,6 @@ const objectTemplate = {
     
         type: 'particle',
         player: false,
-        control: '',
 
         doMotion: true,
         collision: false,
@@ -375,7 +461,7 @@ class tiledataclass {
         texture: anim.dead,
         animated: false,
 
-        collision: true,
+        collision: false,
         collisionCode: false,
 
         container: false,
@@ -388,6 +474,7 @@ class tiledataclass {
         this.collision = data.collision;
         this.collisionCode = data.collisionCode;
 
+        this.insertable = data.insertable;
         this.container = data.container;
         this.contains = data.contains;
     }
@@ -395,7 +482,9 @@ class tiledataclass {
     set(tile, name) {
         const data = tiledata[name];
         tile.type = name;
+        tile.data = data;
         tile.textures = data.texture;
+        tile.time_origin = undefined;
         if(data.animated) { s.animationSpeed = data.animated; s.play(); }
     }
 
@@ -405,11 +494,16 @@ class tiledataclass {
         if(data == undefined) return;
 
         if(data.collisionCode) {
-            // Container
-            if(tile.contains && dir == 'b' || (dir != 'u' && source.type == 'shell')) {
+            // Small
+            if(dir=='b' && !tile.contains && source.form == 'small' && source.player) {
                 this.animate(tile, 'bounce');
-                this.set(tile, 'used');
-                this.dropItem(tile);
+                return;
+            }
+
+            // Container
+            if(tile.contains && (dir == 'b' || (dir != 'u' && source.type == 'shell'))) {
+                this.animate(tile, 'bounce');
+                if(this.dropItem(tile, source)) this.set(tile, 'used');
                 return;
             }
             
@@ -428,7 +522,7 @@ class tiledataclass {
                     }
                     break;
                 case 'damage':
-                    source.death();
+                    source.damage();
                     break;
                 case 'coin':
                     collectCoin();
@@ -440,16 +534,27 @@ class tiledataclass {
         }
     }
 
-    dropItem(tile) {
-        if(tile.contains == 'coin') collectCoin(true, tile.x, tile.y-52);
+    dropItem(tile, source) {
+        if(tile.contains == 'coin') {
+            collectCoin(true, tile.x, tile.y-52);
+            return true;
+        };
+        if(tile.contains == 'multi_coin') {
+            collectCoin(true, tile.x, tile.y-52);
+            if(cycle >= tile.time_origin + 600) return true;
+            if(!tile.time_origin) tile.time_origin = cycle;
+        }
         else {
-            spawn(tile.contains, tile.x, tile.y-48, {
-                motion: { x: 0, y: -5, r: 0, },
-            });
+            let type = tile.contains;
+            const data = objectTemplate[type];
+            if(data.tiered_powerup && source.form == 'small') type = 'mushroom';
+            spawn(type, tile.x, tile.y-48, { motion: { x:0, y:-5, r:0 } });
+            return true;
         }
     }
 
     animate(tile, animation='bounce') {
+        if(animatingTiles.findIndex(obj => obj.tile == tile) != -1) return; // Already mid-animation
         animatingTiles.push({
             'tile': tile,
             'animation': animation,
@@ -524,7 +629,17 @@ const tiledata = {
         animated: 0.07,
 
         collision: false,
-        collisionCode: 'coin', // temporary
+        collisionCode: 'coin',
+        insertable: true,
+    }),
+    'multi_coin': new tiledataclass({
+        // type: 'question',
+        texture: anim.coin,
+        animated: 0.07,
+
+        collision: false,
+        collisionCode: 'coin',
+        insertable: true,
     }),
     'spikes': new tiledataclass({
         // type: 'question',
@@ -564,47 +679,23 @@ const tiledata = {
         collision: true,
     }),
 
+    'black': new tiledataclass({ texture: anim.black }),
+    'bg_brick': new tiledataclass({ texture: anim.bg_brick }),
+    'bg_brick_door': new tiledataclass({ texture: anim.bg_brick_door }),
+    'bg_brick_mid': new tiledataclass({ texture: anim.bg_brick_mid }),
+    'bg_brick_top': new tiledataclass({ texture: anim.bg_brick_top }),
+    'brick_window_l': new tiledataclass({ texture: anim.brick_window_l }),
+    'brick_window_r': new tiledataclass({ texture: anim.brick_window_r }),
+
     // Decoration
-    'bush': new tiledataclass({
-        // type: 'bush',
-        texture: anim.bush,
-        collision: false,
-    }),
-    'bush_med': new tiledataclass({
-        // type: 'bush',
-        texture: anim.bush_med,
-        collision: false,
-    }),
-    'bush_large': new tiledataclass({
-        // type: 'bush',
-        texture: anim.bush_large,
-        collision: false,
-    }),
-    'cloud': new tiledataclass({
-        // type: 'bush',
-        texture: anim.cloud,
-        collision: false,
-    }),
-    'cloud_med': new tiledataclass({
-        // type: 'bush',
-        texture: anim.cloud_med,
-        collision: false,
-    }),
-    'cloud_large': new tiledataclass({
-        // type: 'bush',
-        texture: anim.cloud_large,
-        collision: false,
-    }),
-    'hill': new tiledataclass({
-        // type: 'bush',
-        texture: anim.hill,
-        collision: false,
-    }),
-    'hill_large': new tiledataclass({
-        // type: 'bush',
-        texture: anim.hill_large,
-        collision: false,
-    }),
+    'bush': new tiledataclass({ texture: anim.bush }),
+    'bush_med': new tiledataclass({ texture: anim.bush_med }),
+    'bush_large': new tiledataclass({ texture: anim.bush_large }),
+    'cloud': new tiledataclass({ texture: anim.cloud }),
+    'cloud_med': new tiledataclass({ texture: anim.cloud_med }),
+    'cloud_large': new tiledataclass({ texture: anim.cloud_large }),
+    'hill': new tiledataclass({ texture: anim.hill }),
+    'hill_large': new tiledataclass({ texture: anim.hill_large }),
 }
 
 
@@ -637,5 +728,28 @@ const structures = {
             tile: 'pipe_r',
             move: [-1, 0],
         }
+    ],
+    'castle': [
+        { tile: 'black', move: [-1, 0] },
+        { tile: 'bg_brick', move: [-1, 0] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick_top', move: [1, 1] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick_mid', move: [0, -1] },
+        { tile: 'brick_window_r', move: [0, -1] },
+        { tile: 'bg_brick_top', move: [1, 3] },
+        { tile: 'bg_brick_door', move: [0, -1] },
+        { tile: 'bg_brick_mid', move: [0, -1] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick_top', move: [1, 4] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick_mid', move: [0, -1] },
+        { tile: 'brick_window_l', move: [0, -1] },
+        { tile: 'bg_brick_top', move: [1, 4] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick', move: [0, -1] },
+        { tile: 'bg_brick_top', move: [0, -1] },
     ],
 }

@@ -1,9 +1,6 @@
 --- To Do -----------------------
-- Varying jump height depending on how long the jump button is held
-- Big sprite support
-- Power upsa
-- Points counter
 
+- Points counter
 - Separate render layers
     Objects > Tiles > Decorative tiles > Background
 
@@ -16,6 +13,7 @@ Level editor
 Known bugs
 - Sometimes object collision code will run multiple times in cases where one of the objects isn't immediately made intangible
 - setTimeout and setInterval disregard game speed and whether or not the game is paused
+- Sprites will spontaneously despawn but remain on the screen, including the player
 
 
 --- Low priority ----------------
@@ -26,12 +24,15 @@ Known bugs
 
 
 --- Temporary fix ---------------
+- Big sprite support
 - Camera panning
 - Treat off-screen tiles that are above as Air
 
 
 --- Done (New - old) ------------
 
+- Power ups
+- Varying jump height depending on how long the jump button is held
 - Coins
 - Death
     + When falling off bottom of screen
