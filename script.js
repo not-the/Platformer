@@ -34,12 +34,14 @@ function convertCoord(x, y, reverse=false) {
     return [rx, ry];
 }
 
-var physicsObjects = [];
+var physicsObjects = {};
+var objID = 0;
 var animatingTiles = [];
 
 function exportLevel() {
     var output = {
         creator: '???',
+        bg: app.renderer.backgroundColor,
         objects: [],
         level: [],
     };
@@ -52,7 +54,7 @@ function exportLevel() {
             else outrow.push(row[k].type);
         }
     }
-    for(obj of physicsObjects) {
+    for(let [key, obj] of Object.entries(physicsObjects)) {
         output.objects.push({
             type: obj.type,
             x: obj.s.x,
@@ -84,6 +86,7 @@ class physicsObject {
         // State
         this.form = 'small';
         this.speed_x = this.walk; // Current max horizontal speed, changes when running
+        this.gravity_present = 1;
         this.grounded = false;
         this.jump_ready = true;
         this.jumping = false;
@@ -105,12 +108,18 @@ class physicsObject {
         this.s.animationSpeed = this.animation_speed || 0.08;
         playPauseSprite(this.s);
 
-        physicsObjects.push(this);
+        this.id = objID;
+        physicsObjects[this.id] = this;
+        objID++;
         app.stage.addChild(this.s);
 
         if(this.lifespan) setTimeout(() => {
             this.death();
         }, this.lifespan);
+    }
+
+    gravity() {
+        return world.gravity * this.gravity_multiplier * this.gravity_present;
     }
 
     tick() {
@@ -212,7 +221,10 @@ class physicsObject {
         for(let d in adj) {
             if(adj[d] == undefined) {
                 if(rcx > 0 && rcx <= stage.length-2) adj[d] = { type: '_', data: tiledata['_'] };
-                else adj[d] = { type: 'ground', data: tiledata['ground'] };
+                else {
+                    let off = rcx <= 0 ? -24 : 72;
+                    adj[d] = { type: 'ground', data: tiledata['ground'], x: (rcx*48+off) };
+                }
             }
         }
         this.adj = adj;
@@ -229,10 +241,11 @@ class physicsObject {
         }
 
         // Gravity & Vertical from above
-        if(this.s.y < ground || Math.sign(world.gravity*this.gravity_multiplier) == -1 || !this.collision
+        let grav = this.gravity();
+        if(this.s.y < ground || Math.sign(this.gravity()) == -1 || !this.collision
             && Math.sign(this.motion.y) == 1
         ) {
-            let grav = world.gravity * this.gravity_multiplier;
+
             if(this.jumping && Math.sign(this.motion.y) == -1) grav *= 0.7;
             this.motion.y += grav;
             this.grounded = false;
@@ -242,6 +255,7 @@ class physicsObject {
                 this.s.y = ground;
                 this.motion.y = 0;
                 this.grounded = true;
+                this.pounding = false;
             }
             // Collision event
             adj.under.data.collide('u', adj.under, this);
@@ -286,34 +300,40 @@ class physicsObject {
         // Motion & Friction
 
         // Determine if movement is allowed
-        if(this.s.x % 48 < 24) {  // Left wall
-            if(Math.sign(this.motion.x) != 1) {
-                if(
-                    tiledata[adj.left.type].collision
-                    || (tall && tiledata[adj.upleft.type].collision)
-                ) {
-                    allowXMotion = false;
-                    this.colliding.l = true;
-                    this.s.x = (adj.left.x + 48) || this.s.x;
-                }
-                adj.left.data.collide('r', adj.left, this);
-                if(tall) adj.upleft.data.collide('r', adj.upleft, this);
+
+        // Left wall
+        if(this.s.x % 48 < 24) {  
+            if(
+                tiledata[adj.left.type].collision
+                || (tall && tiledata[adj.upleft.type].collision)
+            ) {
+                allowXMotion = false;
+                this.colliding.l = true;
+                this.s.x = (adj.left.x + 48) || this.s.x;
             }
-        } else this.colliding.l = false;
-        if(this.s.x % 48 > 24) { // Right wall
-            if(Math.sign(this.motion.x) != -1) {
-                if(
-                    tiledata[adj.right.type].collision
-                    || (tall && tiledata[adj.upright.type].collision)
-                ) {
-                    allowXMotion = false;
-                    this.colliding.r = true;
-                    this.s.x = (adj.right.x - 48) || this.s.x;
-                }
-                adj.right.data.collide('l', adj.right, this);
-                if(tall) adj.upright.data.collide('l', adj.upright, this);
+            adj.left.data.collide('r', adj.left, this);
+            if(tall) adj.upleft.data.collide('r', adj.upleft, this);
+
+
+        }
+        this.colliding.l = (this.s.x % 48 <= 24 && tiledata[adj.left.type].collision);
+
+        // Right wall
+        if(this.s.x % 48 > 24) {
+            if(
+                tiledata[adj.right.type].collision
+                || (tall && tiledata[adj.upright.type].collision)
+            ) {
+                allowXMotion = false;
+                this.colliding.r = true;
+                this.s.x = (adj.right.x - 48) || this.s.x;
             }
-        } else this.colliding.r = false;
+            adj.right.data.collide('l', adj.right, this);
+            if(tall) adj.upright.data.collide('l', adj.upright, this);
+        }
+        this.colliding.r = (this.s.x % 48 >= 24 && tiledata[adj.right.type].collision);
+
+        // console.log(this.colliding.l, this.colliding.r);
 
         // Move
         if(allowXMotion || !this.collision) this.runMotion('x'); // Move subject
@@ -368,6 +388,8 @@ class physicsObject {
             this.s.textures = anim[`${this.type}_${this.form}_throw`];
             this.power_anim--;
         }
+
+
         // Crouch
         else if(this.crouching) {
             this.s.textures = anim[`${this.type}_${this.form}_crouch`];
@@ -397,6 +419,10 @@ class physicsObject {
         else {
             this.s.textures = anim[`${this.type}_${this.form}_still`];
         }
+
+        // Power animations
+        const power = powers?.[this.form];
+        if(power?.animate !== undefined) power.animate(this);
     }
 
     /** Player controls handler */
@@ -410,25 +436,59 @@ class physicsObject {
         /* ----- Movement ----- */
         let acceleration = this.grounded ? this.accel_x : this.air_accel;
         let jump = Math.abs(this.motion.x) > 2.8 ? this.jump_accel_super : this.jump_accel;
+        let holding_l_or_r = (pressed[this.controls.left] || pressed[this.controls.right]);
+
+        // Parkour moveset
+        if(this.form == 'parkour') {
+            // Wall slide
+            let wall_attached = (this.colliding.l || this.colliding.r);
+            if(wall_attached && holding_l_or_r && Math.sign(this.motion.y) == 1 && !this.crouching && !this.grounded) {
+                this.motion.y = 0.4;
+                if(pressed[this.controls.jump]) {
+                    let jump_direction = this.colliding.l ? 1 : this.colliding.r ? -1 : 0;
+                    console.log(jump_direction);
+                    this.motion.x += jump_direction * 5;
+                    this.motion.y -= jump;
+    
+                    // Jump state
+                    this.jump_ready = false;
+                    this.jumping = true;
+                }
+            }
+            // Ground pound
+            else if(pressed[this.controls.down] && !this.grounded && !this.pounding) {
+                // this.gravity_present = 0;
+                this.pounding = true;
+                this.motion.y = 3;
+            }
+        }
+
 
         // Run
         if(pressed[this.controls.run] && !this.crouching) {
             this.speed_x = this.run;
-            this.usePower();
+            this.powerAction();
         }
         else {
             this.speed_x = this.walk;
             this.power_ready = true;
         }
 
+        // Jump button (any time)
+        if(pressed[this.controls.jump]) {
+            this.powerJump();
+        }
+
         // Jump
         if(pressed[this.controls.jump] && this.grounded && this.jump_ready) {
             this.motion.y -= jump;
+
+            // Jump state
             this.jump_ready = false;
             this.jumping = true;
         }
         // Reset jump
-        else if(!pressed[' ']) {
+        else if(!pressed[this.controls.jump]) {
             this.jumping = false;
             if(this.grounded) this.jump_ready = true;
         }
@@ -438,12 +498,12 @@ class physicsObject {
         // Right
         if(pressed[this.controls.right]) {
             if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
-            if(this.grounded) this.facing = 1;
+            if(this.grounded || this.form == 'parkour') this.facing = 1;
         };
         // Left
         if(pressed[this.controls.left]) {
             if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration;
-            if(this.grounded) this.facing = -1;
+            if(this.grounded || this.form == 'parkour') this.facing = -1;
         };
         // Action
         if(pressed[this.controls.action]) {
@@ -451,23 +511,22 @@ class physicsObject {
         }
     }
 
-    usePower() {
+    powerAction() {
         if(this.power_ready == false) return;
         this.power_ready = false;
-        // if(this.form == 'small') return;
-        switch (this.form) {
-            case 'fire':
-                if(this.projectiles >= 2) return;
-                this.power_anim = 15;
-                // Turn around
-                if(pressed[this.controls.left]) this.facing = -1;
-                if(pressed[this.controls.right]) this.facing = 1;
-                spawn('fireball', this.s.x+this.facing*24, this.s.y-24, {facing: this.facing, lifespan: 7000 }, { owner: this });
-                this.projectiles++;
-                break;
-            default:
-                break;
-        }
+
+        // Power action
+        const power = powers?.[this.form];
+        if(power?.action !== undefined) power.action(this);
+        
+    }
+    powerJump() {
+        // if(this.power_ready == false) return;
+        // this.power_ready = false;
+
+        // Power action
+        const power = powers?.[this.form];
+        if(power?.jump !== undefined) power.jump(this);
     }
 
     /** Simple AI. Walks back and forth */
@@ -766,8 +825,7 @@ class physicsObject {
         if(this.rider) this.rider.unride();
         if(this.owner) this.owner.projectiles--;
         app.stage.removeChild(this.s); // Delete PIXI sprite
-        let index = physicsObjects.findIndex(obj => obj === this);
-        physicsObjects.splice(index, 1); // Remove from physicsObjects list
+        delete physicsObjects[this.id];
     }
 
 
@@ -796,7 +854,7 @@ function tile(type='ground', x=0, y=0, contained) {
         }
 
         // Insert coin
-        if(data?.insertable && s.data.container) return s.contains = type;
+        if(data?.insertable && s?.data?.container) return s.contains = type;
 
         // Replace
         if(!firstTime) s.textures = data.texture;
@@ -848,14 +906,11 @@ function reset() {
             app.stage.removeChild(spr); // Delete PIXI sprite
         }
     }
-
     // Reset objects
-    for(spr of physicsObjects) {
-        app.stage.removeChild(spr.s); // Delete PIXI sprite
-    }
+    for(i in physicsObjects) physicsObjects[i].despawn();
 
     stage = [];
-    physicsObjects = [];
+    physicsObjects = {};
     animatingTiles = [];
 }
 
@@ -869,6 +924,9 @@ function importLevel(url=false) {
         catch (error) { return console.error('Error fetching level. Details below:', error); }
         // console.log(level);
         const level = imported.level;
+
+        // BG color
+        app.renderer.backgroundColor = imported.bg === undefined ? 0x9290ff : imported.bg;
 
         // Stage
         for(hi = 0; hi < level.length; hi++) {
@@ -1003,10 +1061,11 @@ function gameTick(delta, repeat=false) {
     // Cheats
     if(pressed['arrowright'] || pressed['arrowleft'] || pressed['arrowup'] || pressed['arrowdown']) cheats.freecam = true;
     if(cheats.freecam) {
-        if(pressed['arrowright']) app.stage.x += -4;
-        if(pressed['arrowleft']) app.stage.x += 4;
-        if(pressed['arrowup']) app.stage.y += 4;
-        if(pressed['arrowdown']) app.stage.y += -4;
+        let dis = pressed['shift'] ? 10 : 4;
+        if(pressed['arrowright']) app.stage.x -= dis;
+        if(pressed['arrowleft']) app.stage.x += dis;
+        if(pressed['arrowup']) app.stage.y += dis;
+        if(pressed['arrowdown']) app.stage.y -= dis;
     }
 
     if(world.paused) return;
@@ -1016,14 +1075,14 @@ function gameTick(delta, repeat=false) {
     hudLives.y = -48;
 
     // Physics
-    for(object of physicsObjects) object.tick();
+    for(let [key, object] of Object.entries(physicsObjects)) object.tick();
 
 
     // Touch detection
-    for(i in physicsObjects) {
-        let one = physicsObjects[i];
-        for(let o = i; o < physicsObjects.length; o++) {
-            let two = physicsObjects[o];
+    for(let [key, object] of Object.entries(physicsObjects)) {
+        let one = object;
+        for(let [key2, object2] of Object.entries(physicsObjects)) {
+            let two = physicsObjects[key2];
             if(one === two) continue;
             if(!one.collision || !two.collision) continue;
 
@@ -1082,7 +1141,7 @@ function gameTick(delta, repeat=false) {
     }
 
     // Object unloading
-    for(object of physicsObjects) {
+    for(let [key, object] of Object.entries(physicsObjects)) {
         let state = (object.s.x >= (range[0]-6) * 48 && object.s.x <= (range[1]+6) * 48);
         object.load(state);
     }

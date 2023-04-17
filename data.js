@@ -404,6 +404,31 @@ const objectTemplate = {
         no_mirror: true,
     },
 
+    // 'leaf': {
+    //     texture: 'flower',
+
+    //     type: 'leaf',
+    //     player: false,
+    //     enemy: 'powerup',
+    //     tiered_powerup: true,
+
+    //     doMotion: true,
+    //     collision: true,
+    //     friction: true,
+    // },
+    'parkour': {
+        texture: 'parkour',
+
+        type: 'parkour',
+        player: false,
+        enemy: 'powerup',
+        tiered_powerup: false, // // //
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+    },
+
     // Projectile
     'fireball': {
         texture: 'fireball',
@@ -430,7 +455,7 @@ const objectTemplate = {
         accel_x: 3,
         air_accel: 3,
         walk: 3,
-        jump_accel: 4,
+        jump_accel: 3.2,
 
         facing: 1,
         no_mirror: true,
@@ -483,6 +508,7 @@ class tiledataclass {
         const data = tiledata[name];
         tile.type = name;
         tile.data = data;
+        tile.contains = data.contains;
         tile.textures = data.texture;
         tile.time_origin = undefined;
         if(data.animated) { s.animationSpeed = data.animated; s.play(); }
@@ -541,7 +567,7 @@ class tiledataclass {
         };
         if(tile.contains == 'multi_coin') {
             collectCoin(true, tile.x, tile.y-52);
-            if(cycle >= tile.time_origin + 600) return true;
+            if(cycle >= tile.time_origin + 400) return true;
             if(!tile.time_origin) tile.time_origin = cycle;
         }
         else {
@@ -752,4 +778,32 @@ const structures = {
         { tile: 'bg_brick', move: [0, -1] },
         { tile: 'bg_brick_top', move: [0, -1] },
     ],
+}
+
+
+
+const powers = {
+    'parkour': {
+        animate: object => {
+            // Wall slide
+            if(object.form === 'parkour' && object.pounding) {
+                object.s.textures = anim[`${object.type}_${object.form}_climb2`];
+            }
+            else if(object.form === 'parkour' && (object.colliding.l || object.colliding.r) && !object.grounded) {
+                object.s.textures = anim[`${object.type}_${object.form}_wall_slide`];
+            }
+        },
+    },
+    'fire': {
+        action: object => {
+            if(object.projectiles >= 2) return;
+            if(object.projectiles < 0) object.projectiles = 0; // bandaid fix for projectile count randomly going well into the negative and allowing spam
+            object.power_anim = 15;
+            // Turn around
+            if(pressed[object.controls.left]) object.facing = -1;
+            if(pressed[object.controls.right]) object.facing = 1;
+            spawn('fireball', object.s.x+object.facing*24, object.s.y-24, {facing: object.facing, lifespan: 7000 }, { owner: object });
+            object.projectiles++;
+        },
+    },
 }

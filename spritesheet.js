@@ -7,6 +7,9 @@ PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
 app.stage.y += 48;
 document.getElementById('game').appendChild(app.view);
 
+// Layers
+var layer = new PIXI.display.Layer();
+
 /** Sets sprite anchor and scale */
 function spriteFix(sprite, big=false) {
     sprite.anchor.x = 0.5;
@@ -49,6 +52,30 @@ const textures = {
     'mario_fire_turn':  PIXI.Texture.from('./assets/player1/fire/turn.png'),
     'mario_fire_crouch': PIXI.Texture.from('./assets/player1/fire/crouch.png'),
     'mario_fire_throw': PIXI.Texture.from('./assets/player1/fire/throw.png'),
+
+    // Leaf mario
+    // 'mario_leaf_still': PIXI.Texture.from('./assets/player1/leaf/still.png'),
+    // 'mario_leaf_run1':  PIXI.Texture.from('./assets/player1/leaf/run1.png'),
+    // 'mario_leaf_run2':  PIXI.Texture.from('./assets/player1/leaf/run2.png'),
+    // 'mario_leaf_run3':  PIXI.Texture.from('./assets/player1/leaf/run3.png'),
+    // 'mario_leaf_jump':  PIXI.Texture.from('./assets/player1/leaf/jump.png'),
+    // 'mario_leaf_turn':  PIXI.Texture.from('./assets/player1/leaf/turn.png'),
+    // 'mario_leaf_crouch': PIXI.Texture.from('./assets/player1/leaf/crouch.png'),
+    // // 'mario_leaf_throw': PIXI.Texture.from('./assets/player1/leaf/throw.png'),
+    // 'mario_leaf_wall_slide': PIXI.Texture.from('./assets/player1/leaf/wall_slide.png'),
+    // 'mario_leaf_climb2': PIXI.Texture.from('./assets/player1/leaf/climb2.png'),
+
+    // Modern mario
+    'mario_parkour_still': PIXI.Texture.from('./assets/player1/parkour/still.png'),
+    'mario_parkour_run1':  PIXI.Texture.from('./assets/player1/parkour/run1.png'),
+    'mario_parkour_run2':  PIXI.Texture.from('./assets/player1/parkour/run2.png'),
+    'mario_parkour_run3':  PIXI.Texture.from('./assets/player1/parkour/run3.png'),
+    'mario_parkour_jump':  PIXI.Texture.from('./assets/player1/parkour/jump.png'),
+    'mario_parkour_turn':  PIXI.Texture.from('./assets/player1/parkour/turn.png'),
+    'mario_parkour_crouch': PIXI.Texture.from('./assets/player1/parkour/crouch.png'),
+    // 'mario_parkour_throw': PIXI.Texture.from('./assets/player1/parkour/throw.png'),
+    'mario_parkour_wall_slide': PIXI.Texture.from('./assets/player1/parkour/wall_slide.png'),
+    'mario_parkour_climb2': PIXI.Texture.from('./assets/player1/parkour/climb2.png'),
 
     // Small luigi
     '2_still': PIXI.Texture.from('./assets/player2/player.png'),
@@ -141,6 +168,7 @@ const textures = {
     'flower2': PIXI.Texture.from('./assets/item/flower2.png'),
     'flower3': PIXI.Texture.from('./assets/item/flower3.png'),
     'flower4': PIXI.Texture.from('./assets/item/flower4.png'),
+    'parkour': PIXI.Texture.from('./assets/item/parkour.png'),
 
     // Projectile
     'fireball1': PIXI.Texture.from('./assets/item/fireball1.png'),
@@ -192,6 +220,28 @@ const anim = {
     'mario_fire_crouch': [textures["mario_fire_crouch"]],
     'mario_fire_fall': [textures["mario_fire_run1"]],
     'mario_fire_throw': [textures["mario_fire_throw"]],
+
+    // Mario (Leaf)
+    // 'mario_leaf_still': [textures["mario_leaf_still"]],
+    // 'mario_leaf_run': [textures["mario_leaf_run1"], textures["mario_leaf_run2"], textures["mario_leaf_run3"]],
+    // 'mario_leaf_jump': [textures["mario_leaf_jump"]],
+    // 'mario_leaf_turning': [textures["mario_leaf_turn"]],
+    // 'mario_leaf_crouch': [textures["mario_leaf_crouch"]],
+    // 'mario_leaf_fall': [textures["mario_leaf_run1"]],
+    // 'mario_leaf_throw': [textures["mario_leaf_throw"]],
+    // 'mario_leaf_wall_slide': [textures["mario_leaf_wall_slide"]],
+    // 'mario_leaf_climb2': [textures["mario_leaf_climb2"]],
+
+    // Mario (Modern)
+    'mario_parkour_still': [textures["mario_parkour_still"]],
+    'mario_parkour_run': [textures["mario_parkour_run1"], textures["mario_parkour_run2"], textures["mario_parkour_run3"]],
+    'mario_parkour_jump': [textures["mario_parkour_jump"]],
+    'mario_parkour_turning': [textures["mario_parkour_turn"]],
+    'mario_parkour_crouch': [textures["mario_parkour_crouch"]],
+    'mario_parkour_fall': [textures["mario_parkour_run1"]],
+    'mario_parkour_throw': [textures["mario_parkour_throw"]],
+    'mario_parkour_wall_slide': [textures["mario_parkour_wall_slide"]],
+    'mario_parkour_climb2': [textures["mario_parkour_climb2"]],
 
     // Small luigi
     'luigi_small_still': [textures["2_still"]],
@@ -270,6 +320,7 @@ const anim = {
     mushroom: [textures.mushroom],
     life: [textures.life],
     flower: [textures.flower1, textures.flower2, textures.flower3, textures.flower4],
+    parkour: [textures.parkour],
 
     // Projectiles
     fireball: [textures.fireball1, textures.fireball2, textures.fireball3, textures.fireball4],

@@ -1,3 +1,13 @@
+v0.7
+- Powerup that enables wall jumping & ground pounding
+- Physics objects are now stored in an object instead of an array
+- Pressing shift now increases the freecam pan speed
+- Potential fix for sprites not despawning entirely
+- Misc fixes
+- Objects
+    + Parkour mushroom
+
+
 v0.6
 - Off-screen tiles are now culled (horizontally only)
 - Off-screen objects are now frozen and culled
