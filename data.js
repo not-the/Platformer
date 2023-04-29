@@ -20,12 +20,16 @@ const world = {
 /** Physics objects templates */
 const objectTemplate = {
     'default': {
-        texture: 'still',
+        texture: 'mario_small_still',
 
         type: 'default',
         player: false,
         enemy: false,
         ai_info: false,
+        deal_damage: false,
+        immune: ['enemy', 'sharp'],
+        bounces_player: true,
+        interacts: [], // If interacts with interactable tiles - 'b' below, 's', sides
 
         doMotion: true,
         collision: true,
@@ -69,6 +73,9 @@ const objectTemplate = {
         player: 1,
         // enemy: false,
         control: 'player',
+        deal_damage: 'player',
+        immune: ['player'],
+        interacts: ['b'],
 
         doMotion: true,
         collision: true,
@@ -94,6 +101,9 @@ const objectTemplate = {
         player: 2,
         // enemy: false,
         control: 'player',
+        deal_damage: 'player',
+        immune: ['player'],
+        interacts: ['b'],
 
         doMotion: true,
         collision: true,
@@ -121,6 +131,7 @@ const objectTemplate = {
     
         type: 'mount',
         enemy: 'mount',
+        immune: ['sharp'],
 
         doMotion: true,
         collision: true,
@@ -152,7 +163,9 @@ const objectTemplate = {
             turn_at_wall: true,
             turn_at_ledge: false,
             dissipate_at_wall: false,
+            auto_ride: ['goomba'],
         },
+        deal_damage: 'enemy',
 
         doMotion: true,
         collision: true,
@@ -185,6 +198,7 @@ const objectTemplate = {
             turn_at_ledge: false,
             dissipate_at_wall: false,
         },
+        deal_damage: 'enemy',
 
         doMotion: true,
         collision: true,
@@ -211,6 +225,9 @@ const objectTemplate = {
         ai_info: {
             shell: true,
         },
+        deal_damage: 'shell', // interact ??
+        immune: ['player', 'enemy'],
+        interacts: ['b', 's'],
 
         doMotion: true,
         collision: true,
@@ -241,6 +258,7 @@ const objectTemplate = {
             turn_at_wall: true,
             turn_at_ledge: true,
         },
+        deal_damage: 'enemy',
 
         doMotion: true,
         collision: true,
@@ -269,6 +287,9 @@ const objectTemplate = {
         ai_info: {
             shell: true,
         },
+        deal_damage: 'shell',
+        immune: ['player', 'enemy'],
+        interacts: ['b', 's'],
 
         doMotion: true,
         collision: true,
@@ -286,6 +307,34 @@ const objectTemplate = {
 
         facing: -1,
     },
+    // Bill
+    'bill': {
+        texture: 'bill',
+
+        type: 'bill',
+        player: false,
+        enemy: 'bill',
+        ai_info: {
+            auto_walk: true,
+            // dissipate_at_wall: true,
+        },
+        deal_damage: 'enemy',
+        // interacts: ['b', 's', 'a'],
+
+        doMotion: true,
+        collision: false,
+        friction: false,
+        animate_by_state: false,
+        traction: 1,
+        air_traction: 1,
+        gravity_multiplier: 0,
+
+        accel_x: 1,
+        air_accel: 1,
+        walk: 2,
+
+        facing: -1,
+    },
 
     // Items
     'mushroom': {
@@ -300,6 +349,8 @@ const objectTemplate = {
             turn_at_ledge: false,
             dissipate_at_wall: false,
         },
+        bounces_player: false,
+        immune: ['under'],
 
         doMotion: true,
         collision: true,
@@ -309,7 +360,7 @@ const objectTemplate = {
         air_traction: 1,
 
         accel_x: 0.5,
-        air_accel: 0,
+        air_accel: 0.5,
         walk: 1,
         run: 2,
         jump_accel: 4,
@@ -330,6 +381,8 @@ const objectTemplate = {
             turn_at_ledge: false,
             dissipate_at_wall: false,
         },
+        bounces_player: false,
+        immune: ['under'],
 
         doMotion: true,
         collision: true,
@@ -339,7 +392,7 @@ const objectTemplate = {
         air_traction: 1,
 
         accel_x: 0.5,
-        air_accel: 0,
+        air_accel: 0.5,
         walk: 1,
         run: 2,
         jump_accel: 4,
@@ -354,6 +407,8 @@ const objectTemplate = {
         type: 'fire',
         player: false,
         enemy: 'powerup',
+        bounces_player: false,
+        immune: ['under'],
         tiered_powerup: true,
 
         doMotion: true,
@@ -375,7 +430,7 @@ const objectTemplate = {
         no_mirror: true,
     },
     'star': {
-        texture: 'life',
+        texture: 'star',
 
         type: 'star',
         player: false,
@@ -387,6 +442,8 @@ const objectTemplate = {
             turn_at_ledge: false,
             dissipate_at_wall: false,
         },
+        bounces_player: false,
+        immune: ['under'],
 
         doMotion: true,
         collision: true,
@@ -394,11 +451,12 @@ const objectTemplate = {
         animate_by_state: false,
         traction: 1,
         air_traction: 1,
+        gravity_multiplier: 0.75,
 
         accel_x: 0.5,
-        air_accel: 0,
+        air_accel: 0.5,
         walk: 2,
-        jump_accel: 6,
+        jump_accel: 5,
 
         facing: 1,
         no_mirror: true,
@@ -416,12 +474,28 @@ const objectTemplate = {
     //     collision: true,
     //     friction: true,
     // },
+    'cloud': {
+        texture: 'flower',
+
+        type: 'cloud',
+        player: false,
+        enemy: 'powerup',
+        bounces_player: false,
+        immune: ['under'],
+        tiered_powerup: false,
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+    },
     'parkour': {
         texture: 'parkour',
 
         type: 'parkour',
         player: false,
         enemy: 'powerup',
+        bounces_player: false,
+        immune: ['under'],
         tiered_powerup: false, // // //
 
         doMotion: true,
@@ -444,6 +518,9 @@ const objectTemplate = {
             dissipate_at_wall: true,
             despawn_on_unload: true,
         },
+        bounces_player: false,
+        immune: ['under', 'player'],
+        deal_damage: 'player',
 
         doMotion: true,
         collision: true,
@@ -467,6 +544,7 @@ const objectTemplate = {
     
         type: 'particle',
         player: false,
+        bounces_player: false,
 
         doMotion: true,
         collision: false,
@@ -521,15 +599,21 @@ class tiledataclass {
 
         if(data.collisionCode) {
             // Small
-            if(dir=='b' && !tile.contains && source.form == 'small' && source.player) {
+            if(
+                dir=='b' && !tile.contains && source.form == 'small' && source.player
+                && (data.collisionCode === 'brick' || data.collisionCode === 'question')
+            ) {
                 this.animate(tile, 'bounce');
+                this.hurtAbove(tile, source);
                 return;
             }
 
             // Container
-            if(tile.contains && (dir == 'b' || (dir != 'u' && source.type == 'shell'))) {
+            if(tile.contains && (dir == 'b' || (dir != 'u' && source.interacts.includes('s')))) {
                 this.animate(tile, 'bounce');
+                this.hurtAbove(tile, source);
                 if(this.dropItem(tile, source)) this.set(tile, 'used');
+                // console.log(source);
                 return;
             }
             
@@ -548,7 +632,7 @@ class tiledataclass {
                     }
                     break;
                 case 'damage':
-                    source.damage();
+                    source.damage({ deal_damage: 'sharp' });
                     break;
                 case 'coin':
                     collectCoin();
@@ -577,6 +661,10 @@ class tiledataclass {
             spawn(type, tile.x, tile.y-48, { motion: { x:0, y:-5, r:0 } });
             return true;
         }
+    }
+
+    hurtAbove(tile, source) {
+        for(let [key, object] of Object.entries(physicsObjects)) if(object?.adj?.under === tile) object.damage({ deal_damage: 'under' });
     }
 
     animate(tile, animation='bounce') {
@@ -734,7 +822,15 @@ const structures = {
         },
         {
             tile: 'pipe_top_l',
+            move: [0, -1],
+        },
+        {
+            tile: '_',
             move: [1, 0],
+        },
+        {
+            tile: '_',
+            move: [0, 1],
         },
         {
             tile: 'pipe_top_r',
@@ -786,10 +882,10 @@ const powers = {
     'parkour': {
         animate: object => {
             // Wall slide
-            if(object.form === 'parkour' && object.pounding) {
+            if(object.pounding) {
                 object.s.textures = anim[`${object.type}_${object.form}_climb2`];
             }
-            else if(object.form === 'parkour' && (object.colliding.l || object.colliding.r) && !object.grounded) {
+            else if((object.colliding.l || object.colliding.r) && !object.grounded) {
                 object.s.textures = anim[`${object.type}_${object.form}_wall_slide`];
             }
         },
@@ -804,6 +900,22 @@ const powers = {
             if(pressed[object.controls.right]) object.facing = 1;
             spawn('fireball', object.s.x+object.facing*24, object.s.y-24, {facing: object.facing, lifespan: 7000 }, { owner: object });
             object.projectiles++;
+        },
+    },
+    'cloud': {
+        action: object => {
+            // if(object.projectiles >= 2) return;
+            // if(object.projectiles < 0) object.projectiles = 0; // bandaid fix for projectile count randomly going well into the negative and allowing spam
+            // object.power_anim = 15;
+            // Turn around
+            
+            object.motion.y = -3;
+            let [dl, under, dr] = [object.adj.downleft, object.adj.under, object.adj.downright];
+            if(dl.type == '_') dl?.data?.set(dl, 'ground');
+            if(under.type == '_') under?.data?.set(under, 'ground');
+            if(dr.type == '_') dr?.data?.set(dr, 'ground');
+            
+            // object.projectiles++;
         },
     },
 }

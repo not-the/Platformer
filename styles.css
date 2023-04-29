@@ -37,6 +37,34 @@ table * {
     border: 1px solid rgb(83, 83, 83);
 }
 
+
+/* Game */
+#game {
+    position: relative;
+    max-width: 1200px;
+    min-height: 672px;
+}
+#loader {
+    position: absolute;
+    background-color: rgb(70, 66, 78);
+    top: 0; right: 0; bottom: 0; left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.25s opacity ease;
+    pointer-events: none;
+}
+#loader img {
+    width: 96px;
+    image-rendering: initial;
+    animation: spinner 3s linear infinite;
+    opacity: 1;
+}
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+
 .tools {
     background-color: rgb(20, 20, 20);
     border: 1px solid rgb(65, 65, 65);

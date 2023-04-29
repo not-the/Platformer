@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIXI js Platformer</title>
+    <title>PIXI JS Mario</title>
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -13,7 +13,9 @@
     <script src="https://pixijs.download/release/pixi.js"></script>
 </head>
 <body>
-    <div id="game"></div>
+    <div id="game">
+        <!-- <div id="loader"><img src="./assets/loader.png" alt="Loading..."></div> -->
+    </div>
 
     <!-- Level options -->
     Level:
@@ -61,7 +63,7 @@
             <option value="tile/bg_brick_top">bg_brick_top</option>
             <option value="tile/brick_window_l">brick_window_l</option>
             <option value="tile/brick_window_r">brick_window_r</option>
-            <option value="structure/castle">brick_window_r</option>
+            <option value="structure/castle">castle</option>
 
             <option disabled>--- OBJECTS ---</option>
             <option value="object/mario">mario</option>
@@ -72,11 +74,13 @@
             <option value="object/shell">shell</option>
             <option value="object/red_koopa">red_koopa</option>
             <option value="object/red_shell">red_shell</option>
+            <option value="object/bill">bill</option>
             <option value="object/mushroom">mushroom</option>
             <option value="object/life">life</option>
             <option value="object/star">star</option>
             <option value="object/flower">flower</option>
             <!-- <option value="object/leaf">leaf</option> -->
+            <option value="object/cloud">cloud</option>
             <option value="object/parkour">parkour</option>
             <option value="object/fireball">fireball</option>
             <option value="object/particle">particle</option>
@@ -113,12 +117,14 @@
         <img src="./assets/enemy/shell.png" alt="" role="button" data-value="object/shell" onclick="setEditorTool()">
         <img src="./assets/enemy/red_koopa1.png" alt="" role="button" data-value="object/red_koopa" onclick="setEditorTool()">
         <img src="./assets/enemy/red_shell.png" alt="" role="button" data-value="object/red_shell" onclick="setEditorTool()">
+        <img src="./assets/enemy/bill.png" alt="" role="button" data-value="object/bill" onclick="setEditorTool()">
 
         <img src="./assets/item/mushroom.png" alt="" role="button" data-value="object/mushroom" onclick="setEditorTool()">
         <img src="./assets/item/life.png" alt="" role="button" data-value="object/life" onclick="setEditorTool()">
-        <img src="./assets/item/life.png" alt="" role="button" data-value="object/star" onclick="setEditorTool()">
+        <img src="./assets/item/star1.png" alt="" role="button" data-value="object/star" onclick="setEditorTool()">
         <img src="./assets/item/flower3.png" alt="" role="button" data-value="object/flower" onclick="setEditorTool()">
         <!-- <img src="./assets/item/leaf.png" alt="" role="button" data-value="object/leaf" onclick="setEditorTool()"> -->
+        <img src="./assets/item/flower1.png" alt="" role="button" data-value="object/cloud" onclick="setEditorTool()">
         <img src="./assets/item/parkour.png" alt="" role="button" data-value="object/parkour" onclick="setEditorTool()">
 
 

@@ -1,3 +1,25 @@
+v0.8
+- Objects inside containers are now visible while the game is paused
+- Objects placed while paused will now reflect the direction they are facing
+- Using the eraser on a physics object will now work instantly while the game is paused
+- Enemies on top of a question or brick block when it is hit will now take damage
+- Reworked the way damage/interactions work
+- Fixed some shell/player interactions being incorrect (WIP)
+- Objects or enemies that aren't killed when hit from underneath (brick or ? hit with them on top) will now bounce
+- Gave Starman a sprite and functionality
+- Placing a structure partially out of bounds no longer throws errors
+- Moved sprite data to sheet.json
+- Fixed intangible objects colliding with tiles horizontally
+- Enemies will now despawn when outside of the stage horizontally
+- General camera improvements
+    + Position is an average of all player's positions
+    + Doesn't move when you are in the middle of the screen
+    + Doesn't pan outside of the stage
+    + Fixed camera not resetting on death
+- Objects
+    + Cloud flower
+    + Bullet Bill
+
 v0.7
 - Powerup that enables wall jumping & ground pounding
 - Physics objects are now stored in an object instead of an array

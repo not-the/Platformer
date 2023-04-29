@@ -1,25 +1,30 @@
-/** Get JSON - https://stackoverflow.com/a/22790025/11039898
- * @param {string} url JSON file URL
- * @param {boolean} parse Whether or not to convert into a JS object
- * @returns 
- */
-function get(url, parse = false){
-    var Httpreq = new XMLHttpRequest(); // a new request
-    Httpreq.open("GET", url, false);
-    Httpreq.send(null);
-
-    if(parse == true) return JSON.parse(Httpreq.responseText);
-    return Httpreq.responseText;          
-}
-
+/** Editor */
 function setEditorTool() {
     drawSel.value = event.srcElement.dataset.value;
     document.querySelectorAll('.tools img').forEach(e => e.classList.remove('selection'));
     event.srcElement.classList.add('selection');
 }
 
-
+// Temporary
 let player1;
+
+
+/** CONTROLLER */
+let controller;
+
+window.addEventListener("gamepadconnected", e => {
+    const gp = navigator.getGamepads()[e.gamepad.index];
+    console.log(
+        gp.index,
+        gp.id,
+        gp.buttons.length,
+        gp.axes.length
+    );
+})
+
+
+
+
 
 function convertCoord(x, y, reverse=false) {
     let rx, ry;
@@ -41,7 +46,7 @@ var animatingTiles = [];
 function exportLevel() {
     var output = {
         creator: '???',
-        bg: app.renderer.backgroundColor,
+        bg: app.renderer.background.color,
         objects: [],
         level: [],
     };
@@ -123,11 +128,13 @@ class physicsObject {
     }
 
     tick() {
+        if(this.ghost) return this.despawn(); // Editor ghost
+        
         // if(this.invincible > 0 && cycle % 30 > 15) {
         //     this.s.opacity = 0;
         // } else this.s.opacity = 1;
 
-        if(this.unloaded || !this.s.visible) return;
+        if(this.unloaded || !this.s.visible) return; // Unloaded
         if(this.doMotion) this.physics();
         if(this.control == 'player') this.playerControls();
         else if(this.ai_info) this.ai();
@@ -135,6 +142,7 @@ class physicsObject {
     }
 
     load(state) {
+        if(this.player) return;
         // this.unloaded = !state;
         this.s.visible = state;
         if(this.ai_info?.despawn_on_unload && !state) this.death();
@@ -161,6 +169,10 @@ class physicsObject {
         if(this.s.y > 768 && !this.dead) {
             if(this.player != false) this.death();
             else this.despawn();
+        }
+        // Offscreen horizontally
+        if((this.s.x < -96 || this.s.x > stage.length *48 + 96) && !this.player) {
+            this.despawn();
         }
 
         // Facing
@@ -302,7 +314,7 @@ class physicsObject {
         // Determine if movement is allowed
 
         // Left wall
-        if(this.s.x % 48 < 24) {  
+        if(this.s.x % 48 < 24 && this.collision) {  
             if(
                 tiledata[adj.left.type].collision
                 || (tall && tiledata[adj.upleft.type].collision)
@@ -319,7 +331,7 @@ class physicsObject {
         this.colliding.l = (this.s.x % 48 <= 24 && tiledata[adj.left.type].collision);
 
         // Right wall
-        if(this.s.x % 48 > 24) {
+        if(this.s.x % 48 > 24 && this.collision) {
             if(
                 tiledata[adj.right.type].collision
                 || (tall && tiledata[adj.upright.type].collision)
@@ -404,7 +416,7 @@ class physicsObject {
             pressed[this.controls.right] && Math.sign(this.motion.x) == -1
             || pressed[this.controls.left] && Math.sign(this.motion.x) == 1
         ) {
-            this.s.textures = anim[`${this.type}_${this.form}_turning`];
+            this.s.textures = anim[`${this.type}_${this.form}_turn`];
         }
         // Run
         else if(pressed[this.controls.right] || pressed[this.controls.left]) {
@@ -420,6 +432,10 @@ class physicsObject {
             this.s.textures = anim[`${this.type}_${this.form}_still`];
         }
 
+        // Filters
+        if(this.star_mode && this.s.filters?.length === 0) this.s.filters = [filters.rainbow];
+        else if(this.s.filters?.length !== 0) this.s.filters = [];
+
         // Power animations
         const power = powers?.[this.form];
         if(power?.animate !== undefined) power.animate(this);
@@ -429,12 +445,16 @@ class physicsObject {
     playerControls(rider) {
         if(this.dead == true) return;
 
+        // Timed power countdown
+        if(this.star_mode > 0) this.star_mode--;
+
         // Riding
         if(pressed[this.controls.action]) this.unride();
         if(this.riding) return this.riding.playerControls(rider || this);
 
         /* ----- Movement ----- */
         let acceleration = this.grounded ? this.accel_x : this.air_accel;
+        if(this.star_mode) acceleration *= 1.5;
         let jump = Math.abs(this.motion.x) > 2.8 ? this.jump_accel_super : this.jump_accel;
         let holding_l_or_r = (pressed[this.controls.left] || pressed[this.controls.right]);
 
@@ -446,7 +466,6 @@ class physicsObject {
                 this.motion.y = 0.4;
                 if(pressed[this.controls.jump]) {
                     let jump_direction = this.colliding.l ? 1 : this.colliding.r ? -1 : 0;
-                    console.log(jump_direction);
                     this.motion.x += jump_direction * 5;
                     this.motion.y -= jump;
     
@@ -467,6 +486,7 @@ class physicsObject {
         // Run
         if(pressed[this.controls.run] && !this.crouching) {
             this.speed_x = this.run;
+            if(this.star_mode) this.speed_x *= 5;
             this.powerAction();
         }
         else {
@@ -553,7 +573,11 @@ class physicsObject {
 
         // Dissipate at wall
         if(this.ai_info.dissipate_at_wall) {
-            if(this.colliding.l || this.colliding.r) this.death();
+            if(
+                (this.colliding.l && Math.sign(this.motion.x) === -1)
+                ||
+                (this.colliding.r && Math.sign(this.motion.x) === 1)
+            ) this.death();
         }
 
         // auto walk
@@ -576,77 +600,9 @@ class physicsObject {
 
     /** Shell AI */
     shell() {
-        if(this.dead || !this.collision) return;
+        if(this.dead || !this.collision || this.motion.x === 0) return;
         if(this.colliding.l) this.motion.x = this.walk;
         if(this.colliding.r) this.motion.x = this.walk * -1;
-    }
-
-    /** Interaction with player. "this" will always be the player
-     * @param {*} subject Object player is interacting with
-     * @returns 
-     */
-    playerReaction(subject) {
-        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
-        let [top, side] = this.objectCollisionDirection(subject);
-
-        // Per enemy behavior
-        switch (subject.enemy) {
-            // Player
-            case false:
-                if(top) {
-                    this.bouncePlayer();
-                } else {
-                    let dir = 'left' ? 1 : -1;
-                    // this.motion.x = dir/4;
-                }
-                break;
-            // Goomba, Koopa
-            case 'goomba':
-            case 'koopa':
-                if(top) {
-                    this.bouncePlayer();
-                    subject.damage(this);
-                } else this.damage();
-                // this.ride(subject);
-                break;
-            // Shell
-            case 'shell':
-                if(top) this.bouncePlayer();
-                let dir = side == 'left' ? subject.walk : subject.walk*-1;
-                if(subject.motion.x == 0) { // && (Math.sign(dir) == Math.sign(subject.motion.x))
-                    subject.motion.x = dir; // Kick
-                } else if(subject.motion != 0 && top) {
-                    subject.motion.x = 0; // Stop when bouncing
-                }
-                else if(!top) this.damage();
-                break;
-            // Mount
-            case 'mount':
-                if(top && Math.sign(this.motion.y) == 1) this.ride(subject);
-                break;
-            // Powerup
-            case 'powerup':
-                let power = subject.type;
-                subject.despawn();
-                if(this.form != 'small' && power == 'big') return;
-                if(this.form != power) {
-                    world.paused = true;
-                    setTimeout(() => {
-                        world.paused = false;
-                        // this.sprite_override = undefined;
-                    }, 500);
-                }
-                this.form = power;
-                // this.sprite_override = 'powering_up';
-                break;
-            case 'life':
-                subject.despawn();
-                this.lives++;
-                updateHud();
-                break;
-            default:
-                break;
-        }
     }
 
     objectCollisionDirection(subject) {
@@ -655,44 +611,91 @@ class physicsObject {
         return [top, side];
     }
 
-    /** Interaction between 2 non-player objects */
-    interaction(subject) {
-        let actor, actee;
-        if(this.dead || subject.dead) return;
+    /** Interaction between 2 physicsObjects */
+    interaction(subject, stop=false) {
+        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
 
-        if(this.enemy == 'goomba' && subject.enemy == 'goomba') {
-            let [top, side] = this.objectCollisionDirection(subject);
-            let [otop, oside] = subject.objectCollisionDirection(this);
-            if(top && !this.riding) this.ride(subject);
-            else if(otop && !subject.riding) subject.ride(this);
-        }
-        else if(this.enemy == 'shell' && subject.enemy == 'shell') { // Both shells
-            let dir = this.objectCollisionDirection(subject)[1];
-            if(this.motion.x == 0 && subject.motion.x != 0) this.genericDeathAnimation(dir === 'left' ? 1 : -1);
+        let [top, side] = this.objectCollisionDirection(subject);
+        const dir = side == 'left' ? subject.walk : subject.walk*-1;
+        let nodamage = false;
+        if(subject.bounces_player && top) nodamage = true;
 
-            // actor = subject; actee = this;
-            // subject.death(this, Math.sign(subject.motion.x));
-            // actee.death(actor, Math.sign(actor.motion.x));
-        }
-        else if(this.enemy == 'shell') {
-            actor = this; actee = subject;
-            actee.damage(actor, Math.sign(actor.motion.x));
-        }
-        else if(subject.enemy == 'shell') {
-            actor = subject; actee = this;
-            actee.damage(actor, Math.sign(actor.motion.x));
+        // Interactions
+        if(this?.ai_info.auto_ride?.includes(subject.type) && top) this.ride(subject); // Auto ride
+        if(this.player && subject.bounces_player && top && !this.star_mode) this.bounce(); // Player bounce
+
+        // Unique behavior
+        if(this.player) {
+            switch (subject.enemy) {
+                // Shell
+                case 'shell':
+                    if(top) kick();
+                    else {
+                        if(subject.motion.x !== 0) this.damage();
+                        else kick();
+                    }
+                    /** Kicks shell */
+                    function kick() { subject.motion.x = subject.motion.x === 0 ? dir : 0; }
+                    break;
+                case 'powerup':
+                    let power = subject.type;
+                    subject.despawn();
+                    if(this.form != 'small' && power == 'big') return;
+                    if(this.form != power) {
+                        world.paused = true;
+                        setTimeout(() => {
+                            world.paused = false;
+                            // this.sprite_override = undefined;
+                        }, 500);
+                    }
+                    this.form = power;
+                    // this.sprite_override = 'powering_up';
+                    break;
+                case 'star':
+                    this.star_mode = 1200;
+                    break;
+                // case 'mount':
+                //     if(top && Math.sign(this.motion.y) == 1) this.ride(subject);
+                //     break;
+                default:
+                    break;
+            }
         }
 
-        else if(this.enemy == 'fireball' && subject.enemy != 'fireball') {
-            actor = this; actee = subject;
-            actor.damage();
-            actee.damage(actor, Math.sign(actor.motion.x));
-        }
-        else if(subject.enemy == 'fireball' && this.enemy != 'fireball') {
-            actor = subject; actee = this;
-            actor.damage();
-            actee.damage(actor, Math.sign(actor.motion.x));
-        }
+        // Take damage
+        let takeDamage = ((subject.deal_damage && !nodamage));
+        if(takeDamage) this.damage(subject, dir, top);
+        
+        // Repeat for subject
+        if(!stop) subject.interaction(this, true);
+
+        // if(this.enemy == 'shell' && subject.enemy == 'shell') { // Both shells
+        //     let dir = this.objectCollisionDirection(subject)[1];
+        //     if(this.motion.x == 0 && subject.motion.x != 0) this.genericDeathAnimation(dir === 'left' ? 1 : -1);
+
+        //     // actor = subject; actee = this;
+        //     // subject.death(this, Math.sign(subject.motion.x));
+        //     // actee.death(actor, Math.sign(actor.motion.x));
+        // }
+        // else if(this.enemy == 'shell') {
+        //     actor = this; actee = subject;
+        //     actee.damage(actor, Math.sign(actor.motion.x));
+        // }
+        // else if(subject.enemy == 'shell') {
+        //     actor = subject; actee = this;
+        //     actee.damage(actor, Math.sign(actor.motion.x));
+        // }
+
+        // else if(this.enemy == 'fireball' && subject.enemy != 'fireball') {
+        //     actor = this; actee = subject;
+        //     actor.damage();
+        //     actee.damage(actor, Math.sign(actor.motion.x));
+        // }
+        // else if(subject.enemy == 'fireball' && this.enemy != 'fireball') {
+        //     actor = subject; actee = this;
+        //     actor.damage();
+        //     actee.damage(actor, Math.sign(actor.motion.x));
+        // }
 
         // if(this.enemy == 'powerup')
     }
@@ -709,22 +712,28 @@ class physicsObject {
         delete this.riding.topRider;
         delete this.riding.rider;
         delete this.riding;
-        this.bouncePlayer(0, -6, false);
+        this.bounce(0, -6, false);
     }
 
     /** Bounce off enemy/object */
-    bouncePlayer(x=0, y=-3, allow_high_bounce=true) {
+    bounce(x=0, y=-3, allow_high_bounce=true) {
         if(allow_high_bounce) this.jumping = true;
-        if(pressed[this.controls.jump]) y = -6;
+        if(this.player && pressed[this.controls.jump]) y = -6;
         this.motion.y = y;
         if(x != 0) this.motion.x = x;
     }
 
     /** Damage */
-    damage(source={}, dir=0) {
-        if(this.invincible > 0) return;
-        if(this.rider) this.rider.unride();
+    damage(source={}, dir=0, top=false) {
+        if(this.invincible > 0) return 0;
+        if(this.star_mode > 0) return 0;
 
+        // Types
+        if(this.immune.includes('under')) this.bounce();
+        if(this.immune.includes(source.deal_damage)) return 0;
+
+        // Damage
+        if(this.rider) this.rider.unride();
         if(this.form == 'small') return this.death(source, dir);
         else if(this.form == 'big') this.form = 'small';
         else this.form = 'big';
@@ -770,14 +779,14 @@ class physicsObject {
     }
 
     /** Non-player death */
-    death(source={}, dir=0) {
+    death(source={}, dir=0, top=false) {
         this.dead = true;
 
         if(this.player != false) return this.deathPlayer();
         this.motion.x = 0;
         switch (this.enemy) {
             case 'goomba':
-                if(source.player != false) {
+                if(source.player != false && !top) {
                     this.s.textures = anim.goomba_flat;
                     setTimeout(() => { this.despawn(); }, 1000);
                 }
@@ -785,13 +794,12 @@ class physicsObject {
                 break;
             case 'koopa':
             case 'red_koopa':
-                if(source.player != false) {
+                if(source.player != false && !top) {
                     let drop = this.texture == 'red_koopa' ? 'red_shell': 'shell';
                     spawn(drop, this.s.x, this.s.y);
                     this.despawn();
                 } else {
                     this.s.textures = this.texture == 'red_koopa' ? anim.red_shell: anim.shell;
-                    this.s.scale.y *= -1;
                     this.genericDeathAnimation(dir);
                 }
                 break;
@@ -803,17 +811,18 @@ class physicsObject {
                 break;
             default:
                 this.despawn();
-                // console.warn('default despawn');
-                // this.genericDeathAnimation(dir);
                 break;
         }
     }
 
     /** Generic death animation */
-    genericDeathAnimation(dir=-1) {
+    genericDeathAnimation(dir=1) {
+        if(world.paused) return this.despawn();
         if(this.rider) this.rider.unride();
         this.dead = true;
         this.collision = false;
+        this.gravity_multiplier = 1;
+        this.s.scale.y *= -1;
         this.motion.x = 3*dir;
         this.motion.y = -4;
         this.motion.r = 5*dir;
@@ -824,7 +833,7 @@ class physicsObject {
     despawn() {
         if(this.rider) this.rider.unride();
         if(this.owner) this.owner.projectiles--;
-        app.stage.removeChild(this.s); // Delete PIXI sprite
+        deleteSprite(this.s);
         delete physicsObjects[this.id];
     }
 
@@ -833,6 +842,9 @@ class physicsObject {
     runMotion(axis='x') { this.s[axis] += this.motion[axis]; }
 }
 
+function deleteSprite(s) {
+    app.stage.removeChild(s); // Delete PIXI sprite
+}
 
 /** Creates and returns a tile */
 function tile(type='ground', x=0, y=0, contained) {
@@ -852,6 +864,9 @@ function tile(type='ground', x=0, y=0, contained) {
             s.on('pointerdown', () => { draw(undefined, true); });
             s.on('mouseover', draw);
         }
+
+        // OoB, skip
+        if(s == undefined) return; 
 
         // Insert coin
         if(data?.insertable && s?.data?.container) return s.contains = type;
@@ -878,8 +893,8 @@ function tile(type='ground', x=0, y=0, contained) {
         else if(space == 'structure') {
             const struct = structures[name];
             for(step of struct) {
-                let tile = stage[x][y];
-                alterTile(tile, step.tile);
+                let tile = stage?.[x]?.[y];
+                if(tile !== undefined) alterTile(tile, step.tile);
                 x += step.move[0];
                 y += step.move[1];
             }
@@ -887,6 +902,7 @@ function tile(type='ground', x=0, y=0, contained) {
         else if(space == 'object') {
             if(s.data.collision || s.data.container) {
                 s.contains = name;
+                if(world.paused) spawn(s.contains, s.x, s.y, {ghost:true}); // Editor preview
             } else spawn(name, s.x, s.y);
         }
     }
@@ -902,9 +918,7 @@ function reset() {
 
     // Reset stage
     for(hi = 0; hi < stage.length; hi++) {
-        for(spr of stage[hi]) {
-            app.stage.removeChild(spr); // Delete PIXI sprite
-        }
+        for(spr of stage[hi]) deleteSprite(spr);
     }
     // Reset objects
     for(i in physicsObjects) physicsObjects[i].despawn();
@@ -926,7 +940,7 @@ function importLevel(url=false) {
         const level = imported.level;
 
         // BG color
-        app.renderer.backgroundColor = imported.bg === undefined ? 0x9290ff : imported.bg;
+        app.renderer.background.color = imported.bg === undefined ? 0x9290ff : imported.bg;
 
         // Stage
         for(hi = 0; hi < level.length; hi++) {
@@ -975,9 +989,7 @@ function resizeLevel(dir) {
             stage[stage.length-1].push(tile('_', stage.length-1, i));
         }
     } else if(dir == -1) {
-        for(s of stage[stage.length-1]) {
-            app.stage.removeChild(s);
-        }
+        for(s of stage[stage.length-1]) deleteSprite(s);
         stage.pop();
     }
 }
@@ -985,9 +997,12 @@ function resizeLevel(dir) {
 
 /** Spawn object */
 function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
+    console.log(name);
+    if(objectTemplate[name] == undefined) return console.warn('Not an object');
     let o = new physicsObject(objectTemplate[name], data, data_referential);
     o.s.x = x;
     o.s.y = y;
+    o.s.scale.x = o.facing * 3;
 
     // Interactable
     o.s.eventMode = 'static'; // 'none'/'passive'/'auto'/'static'/'dynamic'
@@ -995,18 +1010,16 @@ function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
     o.s.on('pointerdown', click);
     return o;
 
+    /** Editor */
     function click() {
-        if(drawSel.value == 'tile/_') o.genericDeathAnimation();
+        // Click and drag goes here
+        if(drawSel.value == 'tile/_') o.genericDeathAnimation(); // Erase
     }
 }
 
 /** Spawn coin */
 function collectCoin(visual=false, x, y) {
-    if(visual == true) {
-        spawn('particle', x, y, {
-            motion: { x: 0, y: -5, r: 0, }, texture: 'coin_collect', lifespan: 500,
-        });
-    }
+    if(visual) spawn('particle', x, y, { motion: { x: 0, y: -5, r: 0, }, texture: 'coin_collect', lifespan: 500 });
     world.coins++;
     updateHud();
 }
@@ -1028,6 +1041,7 @@ var hudLives = new PIXI.Text('hud', new PIXI.TextStyle({
     wordWrapWidth: 440,
     lineJoin: 'round',
 }));
+hudLives.zIndex = 5;
 hudLives.x = 12;
 hudLives.y = 3;
 app.stage.addChild(hudLives);
@@ -1092,24 +1106,57 @@ function gameTick(delta, repeat=false) {
                 let nonplayer = false;
                 if(one.player != false) { player = one; nonplayer = two; }
                 if(two.player != false) { player = two; nonplayer = one; }
-                if(player != false) {
-                    player.playerReaction(nonplayer);
-                } else {
-                    one.interaction(two);
-                }
+                // if(player != false) {
+                //     player.playerReaction(nonplayer);
+                // } else {
+                //     one.interaction(two);
+                // }
+                one.interaction(two);
             }
         }
     }
 
     // Camera panning
     let range = [0, 25]; // 0-24 is the screen
-    if(player1.s.x >= app.view.width * 3/5 && !cheats.freecam) {
-        let pos = (player1.s.x * -1) + app.view.width * 3/5;
-        if(app.stage.scale.x == 1) app.stage.x = pos;
+    let posX = [];
+    let posY = [];
+    for(let [key, obj] of Object.entries(physicsObjects)) if(obj.player) { posX.push(obj.s.x); posY.push(obj.s.y); }
+    posX = Math.round(average(posX));
+    posY = Math.round(average(posY));
+    const sleft = (posX < (app.view.width * 2/5) - app.stage.x);
+    const sright = (posX > (app.view.width * 3/5) - app.stage.x);
+    const stop = (posY < (app.view.height * 2/5) - app.stage.y);
+    const sbottom = (posY > (app.view.height * 3/5) - app.stage.y);
+    if(
+        ( sleft || sright ) && !cheats.freecam
+    ) {
+        // Limit calculation
+        let sectionX = sleft ? 2/5 : 3/5;
+        let sectionY = stop ? 2/5 : 3/5;
+        posX = (posX * -1) + app.view.width * sectionX;
+        posY = (posY * -1) + app.view.width * sectionY;
+        const limitX = stage.length * -48 + 1200;
 
-        // Update rendered space
-        let left = Math.floor(convertCoord(pos*-1, 0, true)[0]);
+        if(posX > 0) posX = 0; // Left limit
+        if(posX < limitX) posX = limitX; // Right limit
+        if(app.stage.scale.x == 1) app.stage.x = posX; // Update position
+
+        // Update rendered region
+        let left = Math.floor(convertCoord(Math.round(app.stage.x)*-1, 0, true)[0]);
         range = [left-2, left+27];
+
+        // Tile Culling
+        for(let i in stage) {
+            let col = stage[i];
+            let state = (i >= range[0] && i <= range[1]);
+            for(let item of col) item.visible = state;
+        }
+
+        // Object unloading
+        for(let [key, object] of Object.entries(physicsObjects)) {
+            let state = (object.s.x >= (range[0]-6) * 48 && object.s.x <= (range[1]+6) * 48);
+            object.load(state);
+        }
     }
 
     // Animated tiles
@@ -1131,22 +1178,8 @@ function gameTick(delta, repeat=false) {
         item.tile.y = item.origin.y;
     }
 
-    // Tile Culling
-    for(let i in stage) {
-        let col = stage[i];
-        let state = (i >= range[0] && i <= range[1]);
-        for(let item of col) {
-            item.visible = state;
-        }
-    }
-
-    // Object unloading
-    for(let [key, object] of Object.entries(physicsObjects)) {
-        let state = (object.s.x >= (range[0]-6) * 48 && object.s.x <= (range[1]+6) * 48);
-        object.load(state);
-    }
-
-
+    // Filters
+    filters.rainbow.hue(cycle*1.5 % 360);
 
     // Debug
     document.getElementById('debug').innerHTML = `
@@ -1180,7 +1213,7 @@ function gameTick(delta, repeat=false) {
 
 
 
-// Get distance between two physics objects
+/** Get distance between two physics objects */
 function distance(one, two) {
     let distX = one.s.x - two.s.x;
     let distY = one.s.y - two.s.y;
@@ -1211,10 +1244,20 @@ document.addEventListener('keyup', event => {
     delete pressed[key];
 
     // Pause
-    if(key == 'escape') world.paused = !world.paused;
-    for(spr of app.stage.children) {
-        if(spr.stop != undefined) playPauseSprite(spr);
+    if(key == 'escape') {
+        world.paused = !world.paused; // Pause/unpause
+
+        for(spr of app.stage.children) {
+            if(spr.stop != undefined) playPauseSprite(spr);
+    
+            // Editor preview
+            if(world.paused) {
+                // if(spr?.type == 'invis_question') console.log(spr);
+                if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true});
+            }
+        }
     }
+
 })
 
 // Mouse
@@ -1228,13 +1271,13 @@ document.addEventListener('mouseup', event => {
 // Touch
 document.querySelectorAll('[data-button]').forEach(e => {
     e.addEventListener('touchstart', event => {
-        let key = event.srcElement.dataset.button;
+        let key = event.target.dataset.button;
         pressed[key] = true;
     })
     e.addEventListener('touchend', end);
     e.addEventListener('touchcancel', end);
     function end(event) {
-        let key = event.srcElement.dataset.button;
+        let key = event.target.dataset.button;
         delete pressed[key];
     }
 });

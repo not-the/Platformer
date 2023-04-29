@@ -1,8 +1,15 @@
 --- To Do -----------------------
 
-- Points counter
 - Separate render layers
-    Objects > Tiles > Decorative tiles > Background
+    0 Background
+    1 Decoration tiles
+    2 Hidey enemies (Piranha Plant, Mario while entering a pipe)
+    3 Normal tiles
+    4 Physics Objects
+    5 HUD
+
+- Separate tile collision property from object interaction (bullet bill doesnt deal damage with collision disabled)
+- Points counter
 
 Level editor
 - Separate gameplay mode from the editor
@@ -13,7 +20,7 @@ Level editor
 Known bugs
 - Sometimes object collision code will run multiple times in cases where one of the objects isn't immediately made intangible
 - setTimeout and setInterval disregard game speed and whether or not the game is paused
-- Sprites will spontaneously despawn but remain on the screen, including the player
+- You sometimes get seemingly infinite fireballs
 
 
 --- Low priority ----------------
@@ -25,12 +32,18 @@ Known bugs
 
 --- Temporary fix ---------------
 - Big sprite support
-- Camera panning
-- Treat off-screen tiles that are above as Air
+
+--- Possibly fixed ------------
+    ...
 
 
 --- Done (New - old) ------------
 
+
+- Camera panning
+- Bullet bills shouldn't despawn if there is a tile behind them
+- Sprites will spontaneously despawn but remain on the screen, including the player
+- Treat off-screen tiles that are above as Air
 - Power ups
 - Varying jump height depending on how long the jump button is held
 - Coins
