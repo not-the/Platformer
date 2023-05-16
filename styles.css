@@ -1,3 +1,21 @@
+/* Fonts */
+@font-face {
+    font-family: visitor;
+    src: url(./fonts/visitor/visitor1.ttf);
+    src: url(./fonts/visitor/visitor2.ttf);
+}
+
+:root {
+    --text: white;
+    --alt-text: rgb(200, 200, 200);
+    --link-color: #51a2ff;
+
+    --bg: #171718;
+
+    --border-color: rgba(199, 199, 199, 0.3);
+}
+
+/* Universal */
 * {
     box-sizing: border-box;
     image-rendering: pixelated;
@@ -5,37 +23,105 @@
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
+    padding: 0;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-*[role="button"], input[type="button"], button {
+
+/* Button */
+button,
+input,
+*[role="button"] {
+    display: inline-block;
+    text-decoration: none;
+    vertical-align: middle;
+
+    background-color: rgb(23, 23, 24, 0.8);
+    color: white;
+    border: none;
+
     cursor: pointer;
+    min-width: 24px;
+    text-align: center;
+    padding: 2px 4px;
+
+    font-size: 13pt;
+
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 8px 18px;
+    margin: 0 3px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+
+    transition: background-color 0.2s ease;
+}
+
+a {
+    color: var(--link-color);
+}
+
+button:hover,
+input[type="button"]:hover,
+*[role="button"]:hover,
+button:focus-visible,
+input:focus-visible,
+*[role="button"]:focus-visible {
+    color: black;
+    background-color: white;
+    transition-duration: 0.1s;
+}
+
+input[type="text"], input[type="number"] {
+    width: 100%;
+    max-width: 300px;
+    padding: 4px 14px;
+    border-radius: 8px;
+    cursor: unset;
+}
+input[type="file"] {
+    width: 100%;
+    height: 120px;
+    margin-bottom: 12px;
+}
+input:disabled {
+    border: none;
+    box-shadow: none;
+    cursor: unset;
 }
 
 body {
-    background-color: black;
+    background-color: var(--bg);
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
     margin: 0;
+    /* cursor: url(./assets/ui/cursor.png), auto; */
 }
+hr {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 12px 0 12px;
+}
+.alt_text { color: var(--alt-text); }
 .flex { display: flex; }
+.fullwidth { width: 100%; }
 
 canvas {
     width: 100%;
     max-width: 1195px;
     /* object-fit: contain; */
 }
+h2 { padding-top: 12px; }
 
 table {
     margin-bottom: 12px;
 }
 table td, table th {
     min-width: 96px;
-    padding: 1px 3px;
+    padding-right: 12px;
     margin: 0;
 }
-table * {
-    text-align: left;
-    border: 1px solid rgb(83, 83, 83);
-}
+table * { text-align: left; }
 
 
 /* Game */
@@ -44,6 +130,81 @@ table * {
     max-width: 1200px;
     min-height: 672px;
 }
+#creation {
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+
+    background-color: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 6px 12px;
+
+    transition-property: opacity;
+    transition-duration: 0.1s;
+    transition-timing-function: ease;
+}
+#creation > * {
+    width: 100%;
+    max-width: 600px;
+    position: absolute;
+}
+#game.hide_creation > #creation {
+    /* display: none; */
+    pointer-events: none !important;
+    opacity: 0;
+}
+.ui_box {
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+
+    background-color: var(--bg);
+    height: fit-content;
+    max-height: 100%;
+    padding: 0 18px 18px;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3);
+    
+    transition: transform 0.2s ease;
+}
+#game.hide_creation .ui_box {
+    transform: translate(-50%, -32px);
+}
+.pane { display: none; }
+.pane:target { display: unset; }
+
+.tabs {
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+
+    padding-top: 18px;
+}
+.tabs *[role="button"] {
+    border-radius: 9px 9px 0 0;
+    margin: 0;
+    padding: 6px;
+    font-size: 12pt;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--alt-text);
+}
+.tabs *[role="button"]:hover {
+    border-color: var(--alt-text);
+    background-color: rgba(34, 34, 36, 0.8);
+    color: var(--text);
+}
+.tabs *[role="button"].selection {
+    z-index: 1;
+    background-color: var(--text);
+    color: black;
+}
+
+
+
+/* Loader */
 #loader {
     position: absolute;
     background-color: rgb(70, 66, 78);
@@ -65,6 +226,9 @@ table * {
 }
 
 
+
+
+/* Old tools */
 .tools {
     background-color: rgb(20, 20, 20);
     border: 1px solid rgb(65, 65, 65);
@@ -79,6 +243,7 @@ table * {
     padding: 2px;
     border: 2px solid transparent;
     transition: transform 0.1s ease-out;
+    border-radius: 0;
 }
 .tools img:hover {
     transform: scale(1.25, 1.25);

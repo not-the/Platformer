@@ -1,3 +1,18 @@
+v0.9
+- Vertical stage support
+- HUD no longer disappears when the camera scrolls
+- Fixed Luigi and Red Koopa causing a crash
+- Fixed fireballs bouncing in midair
+- Added a main menu/pause menu, and an HTML UI for level creation/importing/exporting
+- Support for tiles that have collision on specific sides
+- Unfinished slopes
+- Added a page favicon
+- Implemented a limit of 250 physics objects
+- Gave stage width/height minimum and maximum values
+- Added export button to menu, clicking it downloads the current level as a JSON file
+- Drag and drop/upload level functionality + import menu
+
+
 v0.8
 - Objects inside containers are now visible while the game is paused
 - Objects placed while paused will now reflect the direction they are facing

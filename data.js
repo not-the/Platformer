@@ -17,6 +17,136 @@ const world = {
     coins: 0,
 }
 
+/** DEBUG */
+const zoomLevels = [0.1, 0.3, 0.5, 0.75, 1, 1.5, 2];
+var cheats = {
+    freecam: false,
+    zoom: 4,
+}
+// function freecam() {
+
+// }
+
+
+/** Main Menu */
+const menus = {
+    main: [
+        {
+            texture: 'overlay',
+            x: 0,
+            y: -48,
+        },
+        {
+            texture: 'title',
+            x: 64,
+            y: 24,
+        },
+        {
+            'label': 'Play',
+            x: 64,
+            y: 168,
+            click: () => {
+                if(world.paused) pause();
+                toggleMenu(false);
+            },
+        },
+        {
+            'label': 'Create',
+            x: 64,
+            y: 264,
+            click: () => {
+                creationMenu(true, 'create');
+            }
+        },
+        {
+            'label': 'Levels',
+            x: 64,
+            y: 360,
+            click: () => {
+                buildMenu('browse');
+            }
+        },
+        {
+            texture: 'half_button',
+            'label': 'Export',
+            x: 64,
+            y: 480,
+            click: () => {
+                creationMenu(true, 'export');
+            }
+        },
+        {
+            texture: 'half_button',
+            'label': 'Import',
+            x: 284,
+            y: 480,
+            click: () => {
+                creationMenu(true, 'import');
+            }
+        },
+        {
+            texture: 'small_button',
+            x: 1049,
+            y: 480,
+            click: () => {
+                creationMenu(true, 'settings');
+            }
+        },
+        {
+            texture: 'gear',
+            x: 1049,
+            y: 480,
+        },
+    ],
+
+    browse: [
+        {
+            texture: 'overlay',
+            x: 0,
+            y: -48,
+        },
+        {
+            texture: 'button_large',
+            'label': '<- Back',
+            x: 64,
+            y: 48,
+            click: () => {
+                buildMenu('main');
+            },
+        },
+        {
+            texture: 'button_large_blue',
+            'label': 'TEST',
+            x: 64,
+            y: 192,
+            click: () => { importLevel('./levels/test.json') },
+        },
+        {
+            texture: 'button_large_blue',
+            'label': 'Super Mario Bros. 1-1',
+            x: 64,
+            y: 288,
+            click: () => { importLevel('./levels/1-1.json') },
+        },
+        {
+            texture: 'button_large_blue',
+            'label': 'user1',
+            x: 64,
+            y: 384,
+            click: () => { importLevel('./levels/user1.json') },
+        },
+        // {
+        //     texture: 'button_large_blue',
+        //     'label': 'user2',
+        //     x: 64,
+        //     y: 480,
+        //     click: () => { importLevel('./levels/user2.json') },
+        // },
+    ],
+}
+
+
+
 /** Physics objects templates */
 const objectTemplate = {
     'default': {
@@ -127,11 +257,11 @@ const objectTemplate = {
 
     // Entity
     'mount': {
-        texture: 'mount',
+        texture: 'mount_still',
     
         type: 'mount',
         enemy: 'mount',
-        immune: ['sharp'],
+        immune: ['sharp', 'player'],
 
         doMotion: true,
         collision: true,
@@ -558,7 +688,7 @@ const objectTemplate = {
     },
 }
 
-class tiledataclass {
+class tileData {
     constructor(data = {
         // type: '_',
         texture: anim.dead,
@@ -566,6 +696,7 @@ class tiledataclass {
 
         collision: false,
         collisionCode: false,
+        slope: false,
 
         container: false,
         contains: false,
@@ -574,8 +705,11 @@ class tiledataclass {
         this.texture = data.texture;
         this.animated = data.animated;
 
-        this.collision = data.collision;
+        this.collision = data.collision == true ?
+        { u:true, r:true, d:true, l:true, in:true } : { u:false, r:false, d:false, l:false, in:false };
+        this.sides = data.sides;
         this.collisionCode = data.collisionCode;
+        this.slope = data.slope;
 
         this.insertable = data.insertable;
         this.container = data.container;
@@ -583,7 +717,7 @@ class tiledataclass {
     }
 
     set(tile, name) {
-        const data = tiledata[name];
+        const data = tileDataset[name];
         tile.type = name;
         tile.data = data;
         tile.contains = data.contains;
@@ -594,7 +728,7 @@ class tiledataclass {
 
     collide(dir, tile, source) {
         if(source.dead || !source.collision) return;
-        const data = tiledata[tile.type];
+        const data = tileDataset[tile.type];
         if(data == undefined) return;
 
         if(data.collisionCode) {
@@ -683,23 +817,23 @@ class tiledataclass {
 }
 
 /** Tile data */
-const tiledata = {
-    '_': new tiledataclass({
+const tileDataset = {
+    '_': new tileData({
         type: '_',
         texture: anim.none,
         collision: false,
     }),
-    'ground': new tiledataclass({
+    'ground': new tileData({
         // type: 'ground',
         texture: anim.ground,
         collision: true,
     }),
-    'hard': new tiledataclass({
+    'hard': new tileData({
         // type: 'hard',
         texture: anim.hard,
         collision: true,
     }),
-    'brick': new tiledataclass({
+    'brick': new tileData({
         // type: 'brick',
         texture: anim.brick,
 
@@ -708,7 +842,7 @@ const tiledata = {
 
         container: true,
     }),
-    'question': new tiledataclass({
+    'question': new tileData({
         // type: 'question',
         texture: anim.question,
         animated: 0.07,
@@ -719,7 +853,7 @@ const tiledata = {
         container: true,
         contains: 'coin',
     }),
-    'invis_question': new tiledataclass({
+    'invis_question': new tileData({
         // type: 'question',
         texture: anim.none,
         animated: false,
@@ -730,14 +864,14 @@ const tiledata = {
         container: true,
         contains: 'coin',
     }),
-    'used': new tiledataclass({
+    'used': new tileData({
         // type: 'question',
         texture: anim.used,
         animated: false,
 
         collision: true,
     }),
-    'coin': new tiledataclass({
+    'coin': new tileData({
         // type: 'question',
         texture: anim.coin,
         animated: 0.07,
@@ -746,7 +880,7 @@ const tiledata = {
         collisionCode: 'coin',
         insertable: true,
     }),
-    'multi_coin': new tiledataclass({
+    'multi_coin': new tileData({
         // type: 'question',
         texture: anim.coin,
         animated: 0.07,
@@ -755,7 +889,7 @@ const tiledata = {
         collisionCode: 'coin',
         insertable: true,
     }),
-    'spikes': new tiledataclass({
+    'spikes': new tileData({
         // type: 'question',
         texture: anim.spikes,
         animated: false,
@@ -764,28 +898,28 @@ const tiledata = {
         collisionCode: 'damage',
     }),
 
-    'pipe_top_l': new tiledataclass({
+    'pipe_top_l': new tileData({
         // type: 'question',
         texture: anim.pipe_top_l,
         animated: false,
 
         collision: true,
     }),
-    'pipe_top_r': new tiledataclass({
+    'pipe_top_r': new tileData({
         // type: 'question',
         texture: anim.pipe_top_r,
         animated: false,
 
         collision: true,
     }),
-    'pipe_l': new tiledataclass({
+    'pipe_l': new tileData({
         // type: 'question',
         texture: anim.pipe_l,
         animated: false,
 
         collision: true,
     }),
-    'pipe_r': new tiledataclass({
+    'pipe_r': new tileData({
         // type: 'question',
         texture: anim.pipe_r,
         animated: false,
@@ -793,23 +927,40 @@ const tiledata = {
         collision: true,
     }),
 
-    'black': new tiledataclass({ texture: anim.black }),
-    'bg_brick': new tiledataclass({ texture: anim.bg_brick }),
-    'bg_brick_door': new tiledataclass({ texture: anim.bg_brick_door }),
-    'bg_brick_mid': new tiledataclass({ texture: anim.bg_brick_mid }),
-    'bg_brick_top': new tiledataclass({ texture: anim.bg_brick_top }),
-    'brick_window_l': new tiledataclass({ texture: anim.brick_window_l }),
-    'brick_window_r': new tiledataclass({ texture: anim.brick_window_r }),
+    'black': new tileData({ texture: anim.black }),
+    'bg_brick': new tileData({ texture: anim.bg_brick }),
+    'bg_brick_door': new tileData({ texture: anim.bg_brick_door }),
+    'bg_brick_mid': new tileData({ texture: anim.bg_brick_mid }),
+    'bg_brick_top': new tileData({ texture: anim.bg_brick_top }),
+    'brick_window_l': new tileData({ texture: anim.brick_window_l }),
+    'brick_window_r': new tileData({ texture: anim.brick_window_r }),
 
     // Decoration
-    'bush': new tiledataclass({ texture: anim.bush }),
-    'bush_med': new tiledataclass({ texture: anim.bush_med }),
-    'bush_large': new tiledataclass({ texture: anim.bush_large }),
-    'cloud': new tiledataclass({ texture: anim.cloud }),
-    'cloud_med': new tiledataclass({ texture: anim.cloud_med }),
-    'cloud_large': new tiledataclass({ texture: anim.cloud_large }),
-    'hill': new tiledataclass({ texture: anim.hill }),
-    'hill_large': new tiledataclass({ texture: anim.hill_large }),
+    'bush': new tileData({ texture: anim.bush }),
+    'bush_med': new tileData({ texture: anim.bush_med }),
+    'bush_large': new tileData({ texture: anim.bush_large }),
+    'cloud': new tileData({ texture: anim.cloud }),
+    'cloud_med': new tileData({ texture: anim.cloud_med }),
+    'cloud_large': new tileData({ texture: anim.cloud_large }),
+    'hill': new tileData({ texture: anim.hill }),
+    'hill_large': new tileData({ texture: anim.hill_large }),
+
+    // Slopes
+    'ground_slope_l': new tileData({
+        // type: 'ground',
+        texture: anim.ground_slope_l,
+        // collision: { l: true, d: true,},
+        collision: false,
+        // slope: [48, 0],
+        slope: 'reverse', // temporary
+    }),
+    'ground_slope_r': new tileData({
+        // type: 'ground',
+        texture: anim.ground_slope_r,
+        // collision: { r: true, d: true,},
+        collision: false,
+        slope: [0, 48],
+    }),
 }
 
 

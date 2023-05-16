@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIXI JS Mario</title>
+    <link rel="icon" type="image/x-icon" href="./favicon.png">
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -13,15 +14,117 @@
     <script src="https://pixijs.download/release/pixi.js"></script>
 </head>
 <body>
-    <div id="game">
+    <h1 style="display: none;">Mario PIXI.JS</h1>
+
+    <!-- Game -->
+    <div id="game" class="hide_creation">
         <!-- <div id="loader"><img src="./assets/loader.png" alt="Loading..."></div> -->
+        <div id="creation">
+            <div class="ui_box">
+                <!-- Create -->
+                <div class="pane" id="create">
+                    <h2>Create</h2>
+                    <table>
+                        <tr>
+                            <td>Width</td>
+                            <td><input type="number" name="option_level_width" id="option_level_width" value="50" min="25" max="2000"></td>
+                        </tr>
+                        <tr>
+                            <td>Height</td>
+                            <td><input type="number" name="option_level_height" id="option_level_height" value="14" min="14" max="140"></td>
+
+                        </tr>
+                    </table>
+
+                    <input type="button" value="Create level" onclick="importLevel(false)" class="fullwidth">
+                </div>
+
+                <!-- Edit -->
+                <div class="pane" id="edit">
+                    <h2>Level Options</h2>
+                    <table>
+                        <tr>
+                            <td>Resize (width)</td>
+                            <td>
+                                <input type="button" value="-" onclick="resizeLevel(-1)">
+                                <input type="number" name="current_level_width" id="current_level_width" value="0" style="width: 64px" disabled>
+                                <input type="button" value="+" onclick="resizeLevel(1)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Resize (height)</td>
+                            <td>
+                                <input type="button" value="-" onclick="resizeLevel(-1, 'y')">
+                                <input type="number" name="current_level_height" id="current_level_height" value="0" style="width: 64px" disabled>
+                                <input type="button" value="+" onclick="resizeLevel(1, 'y')">
+                            </td>
+                        </tr>
+                    </table>
+
+                    <input type="button" value="Done" onclick="creationMenu(false)" class="fullwidth">
+                </div>
+
+                <!-- Export -->
+                <div class="pane" id="export">
+                    <h2>Export Level</h2>
+                    <table>
+                        <tr>
+                            <td>Level name:</td>
+                            <td><input type="text" name="export_level_name" id="export_level_name" value="Custom level"></td>
+                        </tr>
+                        <tr>
+                            <td>Created by:</td>
+                            <td><input type="text" name="export_creator_name" id="export_creator_name" value="Anonymous"></td>
+                        </tr>
+                    </table>
+
+                    <input type="button" value="Download" onclick="downloadLevel()" class="fullwidth">
+                </div>
+
+                <!-- Import -->
+                <div class="pane" id="import">
+                    <h2>Import Level</h2>
+                    <p class="alt_text">Accepts drag & drop. Must be a JSON file.</p>
+                    <br/>
+                    <input type="file" name="import_level" id="import_level">
+                    <hr/>
+                    <input type="button" value="Import" onclick="importLevel(false, 'upload')" class="fullwidth">
+                </div>
+
+                <!-- Settings -->
+                <div class="pane" id="settings">
+                    <h2>Settings</h2>
+                    <br/>
+                    <footer>
+                        <p>Created by <a href="https://github.com/not-the/" target="_blank" rel=“noreferrer”>not-the</a></p>
+                        <br/>
+                        <a href="https://www.notkal.com/" style="text-decoration: none;" target="_blank" rel=“noreferrer”>
+                            <button class="flex fullwidth">
+                                <img src="https://www.notkal.com/assets/icon.png" alt="notkal.com" style="height: 32px; margin-right: 6px;">
+                                <p>Visit my website</p>
+                            </button>
+                        </a>
+                            
+
+                    </footer>
+                </div>
+            </div>
+            <!-- Tabs -->
+            <div class="flex tabs">
+                <a href="#create" role="button" class="fullwidth">Create</a>
+                <a href="#edit" role="button" class="fullwidth">Edit</a>
+                <a href="#export" role="button" class="fullwidth">Export</a>
+                <a href="#import" role="button" class="fullwidth">Import</a>
+                <a href="#settings" role="button" class="fullwidth">Settings</a>
+                <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="creationMenu(false)">
+                    Close (Esc)
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- Level options -->
-    Level:
-    <input type="button" value="New level" onclick="importLevel(false)"> Width:
-    <input type="number" name="option_level_width" id="option_level_width" value="50">
-    Resize: <input type="button" value="-" onclick="resizeLevel(-1)"><input type="button" value="+" onclick="resizeLevel(1)"><br/><br/>
+    <!-- Debug -->
+    <div id="debug"></div>
 
     <!-- Tools -->
     <div class="tools">
@@ -55,7 +158,6 @@
             <option value="structure/pipe_neck">PIPE_NECK</option>
 
             <option disabled>--- BG Bricks ---</option>
-
             <option value="tile/black">black</option>
             <option value="tile/bg_brick">bg_brick</option>
             <option value="tile/bg_brick_door">bg_brick_door</option>
@@ -64,6 +166,10 @@
             <option value="tile/brick_window_l">brick_window_l</option>
             <option value="tile/brick_window_r">brick_window_r</option>
             <option value="structure/castle">castle</option>
+
+            <option disabled>--- Slopes ---</option>
+            <option value="tile/ground_slope_l">ground_slope_l</option>
+            <option value="tile/ground_slope_r">ground_slope_r</option>
 
             <option disabled>--- OBJECTS ---</option>
             <option value="object/mario">mario</option>
@@ -99,6 +205,11 @@
         <img src="./assets/tile/pipe_l.png" alt="" role="button" data-value="structure/pipe_neck" onclick="setEditorTool()">
         <img src="./assets/decoration/bg_brick_top.png" alt="" role="button" data-value="structure/castle" onclick="setEditorTool()">
         <br/>
+
+        <img src="./assets/tile/slope/ground_slope_l.png" alt="ground" role="button" data-value="tile/ground_slope_l" onclick="setEditorTool()">
+        <img src="./assets/tile/slope/ground_slope_r.png" alt="ground" role="button" data-value="tile/ground_slope_r" onclick="setEditorTool()">
+        <br/>
+
         <img src="./assets/decoration/bush.png" alt="bush" role="button" data-value="tile/bush" onclick="setEditorTool()">
         <img src="./assets/decoration/bush_med.png" alt="bush_med" role="button" data-value="tile/bush_med" onclick="setEditorTool()">
         <img src="./assets/decoration/bush_large.png" alt="bush_large" role="button" data-value="tile/bush_large" onclick="setEditorTool()">
@@ -155,9 +266,6 @@
             </tr>
         </table>
     </div>
-
-    <b>Debug</b>
-    <div id="debug"></div>
 
     <!-- Touch controls -->
     <div class="controls flex">
