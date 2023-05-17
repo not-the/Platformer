@@ -1,4 +1,5 @@
 // DOM
+const body = document.querySelector('body');
 const gamespace = document.getElementById('game');
 const drawSel = document.getElementById('drawtile');
 const importInput = document.getElementById("import_level");
@@ -91,9 +92,9 @@ function importTextures() {
     }
 
     // On load
-    // const loader = document.getElementById('loader')
-    // loader.style.opacity = 0;
-    // setTimeout(() => { loader.remove(); }, 300);
+    const loader = document.getElementById('loader')
+    loader.style.opacity = 0;
+    setTimeout(() => { loader.remove(); }, 300);
 
     /** Test if image exists */
     function imageExists(image_url){

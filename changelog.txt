@@ -1,3 +1,9 @@
+v0.10
+- Slight changes to the main menu
+- Touch controls should no longer appear on non-touch devices
+- Added a touch screen controls toggle to settings
+
+
 v0.9
 - Vertical stage support
 - HUD no longer disappears when the camera scrolls

@@ -18,7 +18,7 @@
 
     <!-- Game -->
     <div id="game" class="hide_creation">
-        <!-- <div id="loader"><img src="./assets/loader.png" alt="Loading..."></div> -->
+        <div id="loader"><img src="./assets/loader.png" alt="Loading..."></div>
         <div id="creation">
             <div class="ui_box">
                 <!-- Create -->
@@ -95,7 +95,13 @@
                 <div class="pane" id="settings">
                     <h2>Settings</h2>
                     <br/>
+                    <label for="setting_controls">
+                        <input type="checkbox" name="setting_controls" id="setting_controls" class="setting">
+                        Touchscreen controls
+                    </label>
+                    <br/>
                     <footer>
+                        <h2>About</h2>
                         <p>Created by <a href="https://github.com/not-the/" target="_blank" rel=“noreferrer”>not-the</a></p>
                         <br/>
                         <a href="https://www.notkal.com/" style="text-decoration: none;" target="_blank" rel=“noreferrer”>
@@ -104,7 +110,12 @@
                                 <p>Visit my website</p>
                             </button>
                         </a>
-                            
+                        <a href="https://github.com/not-the/mario-pixijs" style="text-decoration: none;" target="_blank" rel=“noreferrer”>
+                            <button class="flex fullwidth">
+                                <img src="https://www.notkal.com/assets/icon/github.svg" alt="notkal.com" style="height: 32px; margin-right: 6px; filter: invert();">
+                                <p>Github</p>
+                            </button>
+                        </a>
 
                     </footer>
                 </div>

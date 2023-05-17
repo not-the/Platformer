@@ -51,19 +51,19 @@ const menus = {
             },
         },
         {
-            'label': 'Create',
+            'label': 'Levels',
             x: 64,
             y: 264,
             click: () => {
-                creationMenu(true, 'create');
+                buildMenu('browse');
             }
         },
         {
-            'label': 'Levels',
+            'label': 'Create...',
             x: 64,
-            y: 360,
+            y: 384,
             click: () => {
-                buildMenu('browse');
+                creationMenu(true, 'create');
             }
         },
         {

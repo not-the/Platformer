@@ -28,6 +28,15 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+body {
+    background-color: var(--bg);
+    color: white;
+
+    margin: 0;
+    /* cursor: url(./assets/ui/cursor.png), auto; */
+    overflow: overlay
+}
+
 /* Button */
 button,
 input,
@@ -89,13 +98,7 @@ input:disabled {
     cursor: unset;
 }
 
-body {
-    background-color: var(--bg);
-    color: white;
 
-    margin: 0;
-    /* cursor: url(./assets/ui/cursor.png), auto; */
-}
 hr {
     border: none;
     height: 1px;
@@ -108,7 +111,7 @@ hr {
 
 canvas {
     width: 100%;
-    max-width: 1195px;
+    /* max-width: 1200px; */
     /* object-fit: contain; */
 }
 h2 { padding-top: 12px; }
@@ -127,7 +130,7 @@ table * { text-align: left; }
 /* Game */
 #game {
     position: relative;
-    max-width: 1200px;
+    /* max-width: 1200px; */
     min-height: 672px;
 }
 #creation {
@@ -207,7 +210,7 @@ table * { text-align: left; }
 /* Loader */
 #loader {
     position: absolute;
-    background-color: rgb(70, 66, 78);
+    background-color: var(--border-color);
     top: 0; right: 0; bottom: 0; left: 0;
     display: flex;
     justify-content: center;
@@ -269,7 +272,10 @@ table * { text-align: left; }
     padding: 12px 0;
     margin-top: 24px;
     margin-left: auto;
+
+    visibility: hidden !important;
 }
+body.show_controls .controls { visibility: visible !important; }
 .controls .column {
     margin: 0 16px;
 }

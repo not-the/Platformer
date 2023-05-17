@@ -1010,9 +1010,7 @@ function importLevel(data=false, type='url') {
     panCamera();
 
     function generate(imported) {
-        console.log(imported);
         const level = imported.level;
-        console.log(level);
         app.renderer.background.color = imported.bg === undefined ? 0x9290ff : imported.bg; // BG color
 
         // Stage
@@ -1463,6 +1461,19 @@ document.querySelectorAll('[data-button]').forEach(e => {
     }
 });
 
+/** Settings */
+function setting(name='controls', state='no') {
+    const checkbox = document.getElementById(`setting_${name}`);
+    if(state == 'no') checkbox.checked = checkbox.checked;
+    else checkbox.checked = state;
+
+    // Update
+    if(name === 'controls') {
+        console.log(checkbox.checked);
+        style(body, 'show_controls', checkbox.checked);
+    }
+}
+
 
 // Debug
 document.querySelector('canvas').addEventListener('wheel', event => {
@@ -1484,6 +1495,14 @@ if(location.hash === "#dev") toggleMenu(0); // Skip main menu if in dev mode
 
 // Page loses focus
 window.onblur = () => { pressed = {}; }
+
+setting('controls', (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)));
+document.querySelectorAll('.setting').forEach(element => {
+    element.addEventListener('change', event => {
+        setting(event.srcElement.className.split('_')[1]);
+    });
+})
+
 
 // beforeunload
 // window.onbeforeunload = event => {
