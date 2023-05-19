@@ -63,7 +63,7 @@ const menus = {
             x: 64,
             y: 384,
             click: () => {
-                creationMenu(true, 'create');
+                htmlMenu('creation', true, 'create');
             }
         },
         {
@@ -72,7 +72,7 @@ const menus = {
             x: 64,
             y: 480,
             click: () => {
-                creationMenu(true, 'export');
+                htmlMenu('creation', true, 'export');
             }
         },
         {
@@ -81,15 +81,32 @@ const menus = {
             x: 284,
             y: 480,
             click: () => {
-                creationMenu(true, 'import');
+                htmlMenu('creation', true, 'import');
             }
         },
+
+        // Controllers button
+        {
+            texture: 'small_button',
+            x: 950,
+            y: 480,
+            click: () => {
+                htmlMenu('players', true, '');
+            }
+        },
+        {
+            texture: 'gamepad',
+            x: 950,
+            y: 480,
+        },
+
+        // Settings button
         {
             texture: 'small_button',
             x: 1049,
             y: 480,
             click: () => {
-                creationMenu(true, 'settings');
+                htmlMenu('creation', true, 'settings');
             }
         },
         {
@@ -187,14 +204,15 @@ const objectTemplate = {
         facing: 1,
 
         controls: {
-            up: 'w',
-            left: 'a',
-            right: 'd',
-            down: 's',
-            run: 'shift',
-            jump: ' ',
-            action: 'e',
+            up:     false,
+            left:   false,
+            right:  false,
+            down:   false,
+            run:    false,
+            jump:   false,
+            action: false,
         },
+        hot: {}, /** Button cooldown- prevents pause button from firing every frame */
     },
     'mario': {
         texture: 'mario_small_still',
@@ -824,17 +842,14 @@ const tileDataset = {
         collision: false,
     }),
     'ground': new tileData({
-        // type: 'ground',
         texture: anim.ground,
         collision: true,
     }),
     'hard': new tileData({
-        // type: 'hard',
         texture: anim.hard,
         collision: true,
     }),
     'brick': new tileData({
-        // type: 'brick',
         texture: anim.brick,
 
         collision: true,
@@ -843,7 +858,6 @@ const tileDataset = {
         container: true,
     }),
     'question': new tileData({
-        // type: 'question',
         texture: anim.question,
         animated: 0.07,
 
@@ -854,7 +868,6 @@ const tileDataset = {
         contains: 'coin',
     }),
     'invis_question': new tileData({
-        // type: 'question',
         texture: anim.none,
         animated: false,
 
@@ -865,14 +878,12 @@ const tileDataset = {
         contains: 'coin',
     }),
     'used': new tileData({
-        // type: 'question',
         texture: anim.used,
         animated: false,
 
         collision: true,
     }),
     'coin': new tileData({
-        // type: 'question',
         texture: anim.coin,
         animated: 0.07,
 
@@ -881,7 +892,6 @@ const tileDataset = {
         insertable: true,
     }),
     'multi_coin': new tileData({
-        // type: 'question',
         texture: anim.coin,
         animated: 0.07,
 
@@ -890,12 +900,27 @@ const tileDataset = {
         insertable: true,
     }),
     'spikes': new tileData({
-        // type: 'question',
         texture: anim.spikes,
-        animated: false,
 
         collision: true,
         collisionCode: 'damage',
+    }),
+    'bridge': new tileData({
+        texture: anim.bridge,
+
+        collision: { u: true, },
+    }),
+    'pole': new tileData({
+        texture: anim.pole,
+
+        collision: { u: true, },
+        // collisionCode: 'flagpole',
+    }),
+    'pole_top': new tileData({
+        texture: anim.pole_top,
+
+        collision: { u: true, },
+        // collisionCode: 'flagpole',
     }),
 
     'pipe_top_l': new tileData({
@@ -1024,6 +1049,19 @@ const structures = {
         { tile: 'bg_brick', move: [0, -1] },
         { tile: 'bg_brick', move: [0, -1] },
         { tile: 'bg_brick_top', move: [0, -1] },
+    ],
+    'flagpole': [
+        { tile: 'hard', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
+        { tile: 'pole_top', move: [0, 1] },
+        { entity: 'particle', move: [0, 0], data: { texture: 'flag', friction: false, gravity_multiplier: 0, }}
     ],
 }
 

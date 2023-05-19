@@ -4,6 +4,7 @@
         "overlay": "ui/overlay",
         "pause": "ui/pause",
         "gear": "ui/gear",
+        "gamepad": "ui/gamepad",
 
         "button_large": "ui/button_large",
         "button_large_hover": "ui/button_large_hover",
@@ -12,6 +13,7 @@
 
         "half_button": "ui/half_button",
         "small_button": "ui/small_button",
+        "small_button_white": "ui/small_button_white",
 
 
         "// Small Mario": 0,
@@ -103,6 +105,37 @@
         "luigi_fire_crouch": "player2/fire/crouch",
         "luigi_fire_throw": "player2/fire/throw",
     
+        "// Leaf luigi": 0,
+        "luigi_leaf_still": "player2/leaf/still",
+        "luigi_leaf_run1":  "player2/leaf/run1",
+        "luigi_leaf_run2":  "player2/leaf/run2",
+        "luigi_leaf_run3":  "player2/leaf/run3",
+        "luigi_leaf_jump":  "player2/leaf/jump",
+        "luigi_leaf_turn":  "player2/leaf/turn",
+        "luigi_leaf_crouch": "player2/leaf/crouch",
+    
+        "// Cloud luigi": 0,
+        "luigi_cloud_still": "player2/cloud/still",
+        "luigi_cloud_run1":  "player2/cloud/run1",
+        "luigi_cloud_run2":  "player2/cloud/run2",
+        "luigi_cloud_run3":  "player2/cloud/run3",
+        "luigi_cloud_jump":  "player2/cloud/jump",
+        "luigi_cloud_turn":  "player2/cloud/turn",
+        "luigi_cloud_crouch": "player2/cloud/crouch",
+    
+        "// Modern luigi": 0,
+        "luigi_parkour_still": "player2/parkour/still",
+        "luigi_parkour_run1":  "player2/parkour/run1",
+        "luigi_parkour_run2":  "player2/parkour/run2",
+        "luigi_parkour_run3":  "player2/parkour/run3",
+        "luigi_parkour_jump":  "player2/parkour/jump",
+        "luigi_parkour_turn":  "player2/parkour/turn",
+        "luigi_parkour_crouch": "player2/parkour/crouch",
+        "luigi_parkour_wall_slide": "player2/parkour/wall_slide",
+        "luigi_parkour_climb2": "player2/parkour/climb2",
+
+
+    
         "// Tiles": 0,
         "none": "tile/none",
         "ground": "tile/ground",
@@ -117,6 +150,9 @@
         "coin2": "tile/coin2",
         "coin3": "tile/coin3",
         "spikes": "tile/spikes",
+        "bridge": "tile/bridge",
+        "pole": "tile/pole",
+        "pole_top": "tile/pole_top",
     
         "// Part": 0,
         "pipe_top_l": "tile/pipe_top_l",
@@ -183,6 +219,7 @@
         "fireball4": "item/fireball4",
     
         "// Particle": 0,
+        "flag": "entity/flag",
         "brick_break1": "particle/brick_break1",
         "brick_break2": "particle/brick_break2",
         "brick_break3": "particle/brick_break3",

@@ -17,9 +17,9 @@
     <h1 style="display: none;">Mario PIXI.JS</h1>
 
     <!-- Game -->
-    <div id="game" class="hide_creation">
+    <div id="game" class="hide_creation hide_players">
         <div id="loader"><img src="./assets/loader.png" alt="Loading..."></div>
-        <div id="creation">
+        <div id="creation" class="html_menu">
             <div class="ui_box">
                 <!-- Create -->
                 <div class="pane" id="create">
@@ -61,7 +61,7 @@
                         </tr>
                     </table>
 
-                    <input type="button" value="Done" onclick="creationMenu(false)" class="fullwidth">
+                    <input type="button" value="Done" onclick="htmlMenu('creation', false)" class="fullwidth">
                 </div>
 
                 <!-- Export -->
@@ -127,7 +127,52 @@
                 <a href="#export" role="button" class="fullwidth">Export</a>
                 <a href="#import" role="button" class="fullwidth">Import</a>
                 <a href="#settings" role="button" class="fullwidth">Settings</a>
-                <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="creationMenu(false)">
+                <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="htmlMenu('creation', false)">
+                    Close (Esc)
+                </a>
+            </div>
+        </div>
+        <div id="players" class="html_menu">
+            <div class="ui_box">
+                <h2>Controllers</h2>
+                <div class="flex">
+                    <figure class="players_slot inactive" id="player_1">
+                        <div class="box">
+                            <img src="./assets/tile/none.png" alt="">
+                            <figcaption>1</figcaption>
+                        </div>
+                        <input type="button" value="Identify" disabled>
+                        <img src="./assets/tile/none.png" alt="" class="character">
+                    </figure>
+                    <figure class="players_slot inactive" id="player_2">
+                        <div class="box">
+                            <img src="./assets/tile/none.png" alt="">
+                            <figcaption>2</figcaption>
+                        </div>
+                        <input type="button" value="Identify" disabled>
+                        <img src="./assets/tile/none.png" alt="" class="character">
+                    </figure>
+                    <figure class="players_slot inactive" id="player_3">
+                        <div class="box">
+                            <img src="./assets/tile/none.png" alt="">
+                            <figcaption>3</figcaption>
+                        </div>
+                        <input type="button" value="Identify" disabled>
+                        <img src="./assets/tile/none.png" alt="" class="character">
+                    </figure>
+                    <figure class="players_slot inactive" id="player_4">
+                        <div class="box">
+                            <img src="./assets/tile/none.png" alt="">
+                            <figcaption>4</figcaption>
+                        </div>
+                        <input type="button" value="Identify" disabled>
+                        <img src="./assets/tile/none.png" alt="" class="character">
+                    </figure>
+                </div>
+            </div>
+            <!-- Tabs -->
+            <div class="flex tabs">
+                <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="htmlMenu('players', false)">
                     Close (Esc)
                 </a>
             </div>
@@ -159,6 +204,9 @@
             <option value="tile/hill">hill</option>
             <option value="tile/hill_large">hill_large</option>
             <option value="tile/spikes">spikes</option>
+            <option value="tile/bridge">bridge</option>
+            <option value="tile/pole">pole</option>
+            <option value="tile/pole_top">pole_top</option>
 
             <option disabled>--- Pipe ---</option>
             <option value="tile/pipe_top_l">pipe_top_l</option>
@@ -177,6 +225,7 @@
             <option value="tile/brick_window_l">brick_window_l</option>
             <option value="tile/brick_window_r">brick_window_r</option>
             <option value="structure/castle">castle</option>
+            <option value="structure/flagpole">flagpole</option>
 
             <option disabled>--- Slopes ---</option>
             <option value="tile/ground_slope_l">ground_slope_l</option>
@@ -212,9 +261,14 @@
         <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/coin" onclick="setEditorTool()">
         <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/multi_coin" onclick="setEditorTool()">
         <img src="./assets/tile/spikes.png" alt="question" role="button" data-value="tile/spikes" onclick="setEditorTool()">
+        <img src="./assets/tile/bridge.png" alt="question" role="button" data-value="tile/bridge" onclick="setEditorTool()">
+        <!-- <img src="./assets/tile/pole.png" alt="question" role="button" data-value="tile/pole" onclick="setEditorTool()">
+        <img src="./assets/tile/pole_top.png" alt="question" role="button" data-value="tile/pole_top" onclick="setEditorTool()"> -->
+
         <img src="./assets/tile/pipe_top_l.png" alt="Eraser" role="button" data-value="structure/pipe" onclick="setEditorTool()">
         <img src="./assets/tile/pipe_l.png" alt="" role="button" data-value="structure/pipe_neck" onclick="setEditorTool()">
         <img src="./assets/decoration/bg_brick_top.png" alt="" role="button" data-value="structure/castle" onclick="setEditorTool()">
+        <img src="./assets/entity/flag.png" alt="" role="button" data-value="structure/flagpole" onclick="setEditorTool()">
         <br/>
 
         <img src="./assets/tile/slope/ground_slope_l.png" alt="ground" role="button" data-value="tile/ground_slope_l" onclick="setEditorTool()">

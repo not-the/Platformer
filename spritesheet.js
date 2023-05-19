@@ -77,7 +77,7 @@ function importTextures() {
         try { exists = imageExists(url); }
         catch (error) { }
 
-        if(!exists) url = './assets/small.png';
+        if(!exists) url = './assets/missing.png';
         textures[key] = PIXI.Texture.from(url);
         anim[key] = [textures[key]];
     }

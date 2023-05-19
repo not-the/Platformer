@@ -1,3 +1,20 @@
+v0.11
+- Controller support + local multiplayer
+    > Mario is player 1 and Luigi is player 2, by default. They can both be assigned to players 3 and 4 through the console (for now)
+- Added a player/gamepad management UI
+- Luigi parkour sprites
+- Fixed vertical squashing at some resolutions
+- Improved bounce function
+- Tiles:
+    + Bridge
+    + Pole
+    + Pole (Top)
+- Objects:
+    + Flag
+- Structures:
+    + Flagpole
+
+
 v0.10
 - Slight changes to the main menu
 - Touch controls should no longer appear on non-touch devices

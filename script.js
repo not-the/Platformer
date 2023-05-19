@@ -5,28 +5,45 @@ function setEditorTool() {
     event.srcElement.classList.add('selection');
 }
 
-// Temporary
-let player1;
+// Players
+var players = {};
+let playerID = 1;
+
+/** Join game (local) */
+function join(method='keyboard', gamepad_index) {
+    players[playerID] = {
+        'method':           method,
+        'gamepad_index':    gamepad_index,
+    };
+
+    console.log(`PLAYER (${playerID}) joined with ${method}`);
+
+    /** Update players menu */
+    const element = document.getElementById(`player_${playerID}`);
+    element.classList.remove('inactive');
+    element.innerHTML = `
+    <div class="box">
+        <img src="./assets/ui/${method}.png" alt="" title="${method}">
+        <figcaption>${playerID}</figcaption>
+    </div>
+    <input type="button" value="Identify" onclick="gamepadVibrate(${gamepad_index})"${method === 'gamepad' ? '' : ' disabled'}>
+    <img src="./assets/player${playerID}/player.png" alt="" class="character">`;
+
+    // Reset
+    playerID++;
+}
+
+function gamepadVibrate(id) {
+    navigator.getGamepads()[id].vibrationActuator.playEffect("dual-rumble", {
+        startDelay: 0,
+        duration: 300,
+        weakMagnitude: 1.0,
+        strongMagnitude: 1.0,
+    })
+}
 
 
-/** CONTROLLER */
-let controller;
-
-window.addEventListener("gamepadconnected", e => {
-    const gp = navigator.getGamepads()[e.gamepad.index];
-    controller = e.gamepad;
-    console.log(
-        gp.index,
-        gp.id,
-        gp.buttons.length,
-        gp.axes.length
-    );
-})
-
-
-
-
-
+/** Converts pixel coordinates to tile coordinates and vice versa */
 function convertCoord(x, y, reverse=false) {
     let rx, ry;
     if(reverse) {
@@ -40,11 +57,12 @@ function convertCoord(x, y, reverse=false) {
     return [rx, ry];
 }
 
+// Sprite lists
 var physicsObjects = {};
 var objID = 0;
-var animatingTiles = [];
-var menuID = 0;
 var menuElements = {};
+var menuID = 0;
+var animatingTiles = [];
 
 /** Returns the current level in string form */
 function exportLevel() {
@@ -147,6 +165,10 @@ class physicsObject {
     }
 
     tick() {
+        /** Run even if paused */
+        if(this.player) this.controlsHandler();
+
+        if(world.paused) return;
         if(this.ghost) return this.despawn(); // Editor ghost
         
         // if(this.invincible > 0 && cycle % 30 > 15) {
@@ -165,6 +187,49 @@ class physicsObject {
         // this.unloaded = !state;
         this.s.visible = state;
         if(this.ai_info?.despawn_on_unload && !state) this.death();
+    }
+
+    /** Translates keypresses and controller inputs into an easy to use object */
+    controlsHandler() {
+        const mappings = {
+            'keyboard': {
+                up:     'w',
+                left:   'a',
+                right:  'd',
+                down:   's',
+                run:    'shift',
+                jump:   ' ',
+                action: 'e',
+            },
+            'gamepad': {
+                up:     12,
+                left:   14,
+                right:  15,
+                down:   13,
+                run:    2,
+                jump:   0,
+                action: 3,
+                
+                start:  9,
+            },
+        }
+        let user = players[this.player];
+        if(user == undefined) return;
+
+        let map = mappings[user.method];
+        if(user.method === 'keyboard') {
+            for(let [key, value] of Object.entries(map)) this.controls[key] = pressed[value];
+        } else if(user.method === 'gamepad') {
+            let gamepad = navigator.getGamepads()[user.gamepad_index];
+            for(let [key, value] of Object.entries(map)) {
+                this.controls[key] = gamepad.buttons[value].pressed;
+            }
+
+            if(this.controls['start']) {
+                if(!this.hot['start']) menuKey();
+                this.hot['start'] = true;
+            } else delete this.hot['start'];
+        }
     }
 
     /** Collision */
@@ -286,8 +351,6 @@ class physicsObject {
         let grav = this.gravity();
         if(this.s.y < ground || Math.sign(this.gravity()) == -1 || !this.collision
             && Math.sign(this.motion.y) == 1
-            && !adj.inside.data.slope
-            && !adj.under.data.slope
         ) {
             // Falling
             if(this.jumping && Math.sign(this.motion.y) == -1) grav *= 0.7;
@@ -445,18 +508,18 @@ class physicsObject {
         }
         // Turn
         else if(
-            pressed[this.controls.right] && Math.sign(this.motion.x) == -1
-            || pressed[this.controls.left] && Math.sign(this.motion.x) == 1
+            this.controls.right && Math.sign(this.motion.x) == -1
+            || this.controls.left && Math.sign(this.motion.x) == 1
         ) {
             this.s.textures = anim[`${this.type}_${this.form}_turn`];
         }
         // Run
-        else if(pressed[this.controls.right] || pressed[this.controls.left]) {
+        else if(this.controls.right || this.controls.left) {
             if(this.s.textures != anim[`${this.type}_${this.form}_run`]) {
                 this.s.textures = anim[`${this.type}_${this.form}_run`];
                 playPauseSprite(this.s);
             }
-            if(pressed[this.controls.run]) this.s.animationSpeed = 0.24;
+            if(this.controls.run) this.s.animationSpeed = 0.24;
             else this.s.animationSpeed = 0.16;
         }
         // Still
@@ -481,14 +544,14 @@ class physicsObject {
         if(this.star_mode > 0) this.star_mode--;
 
         // Riding
-        if(pressed[this.controls.action]) this.unride();
+        if(this.controls.action) this.unride();
         if(this.riding) return this.riding.playerControls(rider || this);
 
         /* ----- Movement ----- */
         let acceleration = this.grounded ? this.accel_x : this.air_accel;
         if(this.star_mode) acceleration *= 1.5;
         let jump = Math.abs(this.motion.x) > 2.8 ? this.jump_accel_super : this.jump_accel;
-        let holding_l_or_r = (pressed[this.controls.left] || pressed[this.controls.right]);
+        let holding_l_or_r = (this.controls.left || this.controls.right);
 
         // Parkour moveset
         if(this.form == 'parkour') {
@@ -496,7 +559,7 @@ class physicsObject {
             let wall_attached = (this.colliding.l || this.colliding.r);
             if(wall_attached && holding_l_or_r && Math.sign(this.motion.y) == 1 && !this.crouching && !this.grounded) {
                 this.motion.y = 0.4;
-                if(pressed[this.controls.jump]) {
+                if(this.controls.jump) {
                     let jump_direction = this.colliding.l ? 1 : this.colliding.r ? -1 : 0;
                     this.motion.x += jump_direction * 5;
                     this.motion.y -= jump;
@@ -507,7 +570,7 @@ class physicsObject {
                 }
             }
             // Ground pound
-            else if(pressed[this.controls.down] && !this.grounded && !this.pounding) {
+            else if(this.controls.down && !this.grounded && !this.pounding) {
                 // this.gravity_present = 0;
                 this.pounding = true;
                 this.motion.y = 3;
@@ -516,7 +579,7 @@ class physicsObject {
 
 
         // Run
-        if(pressed[this.controls.run] && !this.crouching) {
+        if(this.controls.run && !this.crouching) {
             this.speed_x = this.run;
             if(this.star_mode) this.speed_x *= 5;
             this.powerAction();
@@ -527,12 +590,12 @@ class physicsObject {
         }
 
         // Jump button (any time)
-        if(pressed[this.controls.jump]) {
+        if(this.controls.jump) {
             this.powerJump();
         }
 
         // Jump
-        if(pressed[this.controls.jump] && this.grounded && this.jump_ready) {
+        if(this.controls.jump && this.grounded && this.jump_ready) {
             this.motion.y -= jump;
 
             // Jump state
@@ -540,25 +603,25 @@ class physicsObject {
             this.jumping = true;
         }
         // Reset jump
-        else if(!pressed[this.controls.jump]) {
+        else if(!this.controls.jump) {
             this.jumping = false;
             if(this.grounded) this.jump_ready = true;
         }
         // Crouch
-        if(pressed[this.controls.down] && this.grounded) this.crouching = true;
+        if(this.controls.down && this.grounded) this.crouching = true;
         else if(this.crouching && this.grounded && !(this.form != 'small' && tileDataset[this.adj.up.type].collision.d)) this.crouching = false;
         // Right
-        if(pressed[this.controls.right]) {
+        if(this.controls.right) {
             if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
             if(this.grounded || this.form == 'parkour') this.facing = 1;
         };
         // Left
-        if(pressed[this.controls.left]) {
+        if(this.controls.left) {
             if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration;
             if(this.grounded || this.form == 'parkour') this.facing = -1;
         };
         // Action
-        if(pressed[this.controls.action]) {
+        if(this.controls.action) {
             this.unride();
         }
     }
@@ -654,7 +717,7 @@ class physicsObject {
 
         // Interactions
         if(this?.ai_info.auto_ride?.includes(subject.type) && top) this.ride(subject); // Auto ride
-        if(this.player && subject.bounces_player && top && !this.star_mode) this.bounce(); // Player bounce
+        if(this.player && subject.bounces_player && top && !this.star_mode) this.bounce(subject); // Player bounce
 
         // Unique behavior
         if(this.player) {
@@ -744,14 +807,14 @@ class physicsObject {
         delete this.riding.topRider;
         delete this.riding.rider;
         delete this.riding;
-        this.bounce(0, -6, false);
+        this.bounce(undefined, 0, -6, false);
     }
 
     /** Bounce off enemy/object */
-    bounce(x=0, y=-3, allow_high_bounce=true) {
-        console.log(this);
+    bounce(source, x=0, y=-3, allow_high_bounce=true) {
         if(allow_high_bounce) this.jumping = true;
-        if(this.player && pressed[this.controls.jump]) y = -6;
+        if(this.controls.jump) y -= 3; /** Higher if holding jump */
+        if(source) y += source.motion.y; /** Bounce higher if lower object is moving up */
         this.motion.y = y;
         if(x != 0) this.motion.x = x;
     }
@@ -762,7 +825,7 @@ class physicsObject {
         if(this.star_mode > 0) return 0;
 
         // Types
-        if(source.deal_damage == 'under' && this.immune.includes('under')) this.bounce();
+        if(source.deal_damage == 'under' && this.immune.includes('under')) this.bounce(source);
         if(this.immune.includes(source.deal_damage)) return 0;
 
         // Damage
@@ -928,7 +991,8 @@ function tile(type='ground', x=0, y=0, contained) {
             const struct = structures[name];
             for(step of struct) {
                 let tile = stage?.[x]?.[y];
-                if(tile !== undefined) alterTile(tile, step.tile);
+                if(tile !== undefined && step.tile !== undefined) alterTile(tile, step.tile);
+                if(tile !== undefined && step.entity !== undefined) spawn(step.entity, convertCoord(x, 0)[0], convertCoord(0, y)[1], step.data );
                 x += step.move[0];
                 y += step.move[1];
             }
@@ -1000,12 +1064,12 @@ function importLevel(data=false, type='url') {
             }
         }
 
-        player1 = spawn("mario", ...convertCoord(3, 11));
+        spawn("mario", ...convertCoord(3, 11));
     }
 
     // Close menu
     toggleMenu(false);
-    creationMenu(false);
+    htmlMenu('creation', false);
     updateLevelOptions();
     panCamera();
 
@@ -1127,7 +1191,7 @@ hudLives.x = 12;
 hudLives.y = 3;
 app.stage.addChild(hudLives);
 function updateHud() {
-    hudLives.text = `Lives x${player1.lives}  Coins x${world.coins}`;
+    hudLives.text = `Lives x-  Coins x-`;
 }
 updateHud();
 
@@ -1199,6 +1263,30 @@ function destroyMenu() {
     menuElements = {};
 }
 
+/** Escape key */
+function menuKey() {
+    if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
+    else if(!gamespace.classList.contains('hide_players')) htmlMenu('players', false);
+    else {
+        for(spr of app.stage.children) {
+            // Stop animations
+            if(spr.stop != undefined) playPauseSprite(spr);
+    
+            // Editor preview
+            if(world.paused) {
+                try {
+                    if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true}); /** Make container contents visible */
+                    if(spr?.type == 'invis_question') spawn('particle', spr?.x, spr?.y, {texture:'invis_question', ghost:true}); /** Make invisible question blocks visible */
+                }
+                catch (error) { console.warn(error); }
+            }
+        }
+
+        // Pause game & open menu
+        pause();
+    }
+}
+
 /** Pause/Unpause */
 function pause(state=undefined) {
     toggleMenu();
@@ -1211,9 +1299,9 @@ function toggleMenu(state=!world.paused) {
 }
 
 /** Toggle HTML creation menu */
-function creationMenu(state=true, pane='create') {
+function htmlMenu(id='creation', state=true, pane='create') {
     document.location.hash = state ? `#${pane}` : '';
-    style(gamespace, 'hide_creation', !state);
+    style(gamespace, `hide_${id}`, !state);
 }
 
 
@@ -1247,7 +1335,7 @@ function gameTick(delta, repeat=false) {
         if(pressed['arrowdown']) app.stage.y -= dis;
     }
 
-    if(world.paused) return;
+
 
     // UI (temporary)
     hudLives.x = (app.stage.x*-1) + 12;
@@ -1256,6 +1344,7 @@ function gameTick(delta, repeat=false) {
     // Physics
     for(let [key, object] of Object.entries(physicsObjects)) object.tick();
 
+    if(world.paused) return;
 
     // Touch detection
     for(let [key, object] of Object.entries(physicsObjects)) {
@@ -1307,6 +1396,84 @@ function gameTick(delta, repeat=false) {
     filters.rainbow.hue(cycle*1.5 % 360);
 
     // Debug
+    try {
+        let pad = navigator.getGamepads()[players[0]['gamepad_index']] ;
+        document.getElementById('debug').innerHTML = `
+        <table>
+            <tr>
+                <td>(0) X</td>
+                <th>${pad.buttons[0].pressed ? pad.buttons[0].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(1) O</td>
+                <th>${pad.buttons[1].pressed ? pad.buttons[1].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(2) Square</td>
+                <th>${pad.buttons[2].pressed ? pad.buttons[2].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(3) Triangle</td>
+                <th>${pad.buttons[3].pressed ? pad.buttons[3].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(4) L Bumper</td>
+                <th>${pad.buttons[4].pressed ? pad.buttons[4].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(5) R Bumper</td>
+                <th>${pad.buttons[5].pressed ? pad.buttons[5].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(6) L Trigger </td>
+                <th>${pad.buttons[6].pressed ? pad.buttons[6].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(7) R Trigger</td>
+                <th>${pad.buttons[7].pressed ? pad.buttons[7].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(8) Select</td>
+                <th>${pad.buttons[8].pressed ? pad.buttons[8].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(9) Start</td>
+                <th>${pad.buttons[9].pressed ? pad.buttons[9].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(10) L3</td>
+                <th>${pad.buttons[10].pressed ? pad.buttons[10].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(11) R3</td>
+                <th>${pad.buttons[11].pressed ? pad.buttons[11].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(12) Up DPAD</td>
+                <th>${pad.buttons[12].pressed ? pad.buttons[12].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(13) Down DP</td>
+                <th>${pad.buttons[13].pressed ? pad.buttons[13].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(14) Left DP</td>
+                <th>${pad.buttons[14].pressed ? pad.buttons[14].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(15) Right DP</td>
+                <th>${pad.buttons[15].pressed ? pad.buttons[15].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(16) HOME</td>
+                <th>${pad.buttons[16].pressed ? pad.buttons[16].pressed : ''}</th>
+            </tr>
+            <tr>
+                <td>(17) Trackpad Click</td>
+                <th>${pad.buttons[17].pressed ? pad.buttons[17].pressed : ''}</th>
+            </tr>
+        </table>`;
+    } catch (error) { }
     // document.getElementById('debug').innerHTML = `
     // <table>
     //     <tr>
@@ -1408,58 +1575,43 @@ document.addEventListener('keydown', event => {
     let key = event.key.toLowerCase();
     pressed[key] = true;
     if(key == ' ' || key == 'arrowup' || key == 'arrowdown') event.preventDefault();
-})
 
+    if(Object.keys(players).length === 0) join('keyboard');
+})
 document.addEventListener('keyup', event => {
     let key = event.key.toLowerCase();
     delete pressed[key];
 
     // Pause
-    if(key == 'escape') {
-        if(gamespace.classList.contains('hide_creation')) {
-            for(spr of app.stage.children) {
-                // Stop animations
-                if(spr.stop != undefined) playPauseSprite(spr);
-        
-                // Editor preview
-                if(world.paused) {
-                    // if(spr?.type == 'invis_question') console.log(spr);
-                    try {
-                        if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true});
-                    } catch (error) {
-                        console.warn(error);
-                    }
-                }
-            }
-    
-            // Pause game & open menu
-            pause();
-        } else creationMenu(false);
-    }
-
+    if(key == 'escape') menuKey();
 })
 
 // Mouse
-document.addEventListener('mousedown', event => {
-    pressed['leftClick'] = true
-})
-document.addEventListener('mouseup', event => {
-    pressed['leftClick'] = false;
-})
+document.addEventListener('mousedown', event => { pressed['leftClick'] = true })
+document.addEventListener('mouseup', event => { pressed['leftClick'] = false; })
 
 // Touch
 document.querySelectorAll('[data-button]').forEach(e => {
-    e.addEventListener('touchstart', event => {
-        let key = event.target.dataset.button;
-        pressed[key] = true;
-    })
+    e.addEventListener('touchstart', event => { pressed[event.target.dataset.button] = true; })
+    function end(event) { delete pressed[event.target.dataset.button]; }
     e.addEventListener('touchend', end);
     e.addEventListener('touchcancel', end);
-    function end(event) {
-        let key = event.target.dataset.button;
-        delete pressed[key];
-    }
 });
+
+/** Gamepad */
+window.addEventListener("gamepadconnected", e => {
+    // const gp = navigator.getGamepads()[e.gamepad.index];
+    join('gamepad', e.gamepad.index);
+})
+// window.addEventListener("gamepaddisconnected", e => {
+//     const gp = navigator.getGamepads()[e.gamepad.index];
+
+    // // Loop players and find relevant user
+    // for() {
+
+    // }
+    // leave('gamepad', e.gamepad.index);
+// })
 
 /** Settings */
 function setting(name='controls', state='no') {
@@ -1473,7 +1625,6 @@ function setting(name='controls', state='no') {
         style(body, 'show_controls', checkbox.checked);
     }
 }
-
 
 // Debug
 document.querySelector('canvas').addEventListener('wheel', event => {
