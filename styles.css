@@ -91,6 +91,9 @@ input[type="file"] {
     height: 120px;
     margin-bottom: 12px;
 }
+input[type="file"]:hover {
+    filter: brightness(140%);
+}
 input:disabled {
     border: none;
     box-shadow: none;
@@ -133,10 +136,9 @@ table * { text-align: left; }
 /* Game */
 #game {
     position: relative;
-    /* max-width: 1200px; */
-    /* min-height: 672px; */
     max-height: 100vh;
     aspect-ratio: 1200 / 672;
+    margin: 0 auto;
 }
 .html_menu {
     position: absolute;
@@ -240,6 +242,7 @@ table * { text-align: left; }
 }
 #players .players_slot > .box {
     width: 100%;
+    padding: 12px;
     background-color: rgb(214, 214, 214);
     border-radius: 9px;
     box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.15);
@@ -254,7 +257,7 @@ table * { text-align: left; }
     filter: brightness(80%);
 }
 #players .players_slot img {
-    width: 80%;
+    width: 85%;
 }
 #players .players_slot figcaption {
     text-align: center;

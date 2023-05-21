@@ -135,6 +135,25 @@
         "luigi_parkour_climb2": "player2/parkour/climb2",
 
 
+        "// Mega Man": 0,
+        "megaman_big_still": "mega/still",
+        "megaman_big_run1": "mega/run1",
+        "megaman_big_run2": "mega/run2",
+        "megaman_big_run3": "mega/run3",
+        "megaman_big_jump":  "mega/jump",
+        "megaman_big_turn":  "mega/still",
+        "megaman_big_crouch": "mega/still_blink",
+        "megaman_big_fall": "mega/jump",
+
+        "megaman_big_still_firing": "mega/firing/still",
+        "megaman_big_run1_firing": "mega/firing/run1",
+        "megaman_big_run2_firing": "mega/firing/run2",
+        "megaman_big_run3_firing": "mega/firing/run3",
+        "megaman_big_jump_firing":  "mega/firing/jump",
+        "megaman_big_turn_firing":  "mega/firing/still",
+        "megaman_big_crouch_firing": "mega/firing/still_blink",
+        "megaman_big_fall_firing": "mega/firing/jump",
+
     
         "// Tiles": 0,
         "none": "tile/none",
@@ -217,6 +236,7 @@
         "fireball2": "item/fireball2",
         "fireball3": "item/fireball3",
         "fireball4": "item/fireball4",
+        "lemon": "item/lemon",
     
         "// Particle": 0,
         "flag": "entity/flag",
@@ -245,6 +265,9 @@
 
         "luigi_small_run": ["luigi_small_run1", "luigi_small_run2", "luigi_small_run3"],
         "luigi_small_fall": ["luigi_small_run1"],
+
+        "megaman_big_run": ["megaman_big_run3", "megaman_big_run2", "megaman_big_run1", "megaman_big_run2"],
+        "megaman_big_run_firing": ["megaman_big_run3_firing", "megaman_big_run2_firing", "megaman_big_run1_firing", "megaman_big_run2_firing"],
 
         "mario_big_run": ["mario_big_run1", "mario_big_run2", "mario_big_run3"],
         "mario_big_fall": ["mario_big_run1"],

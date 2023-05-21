@@ -15,8 +15,9 @@ document.getElementById('game').appendChild(app.view);
 // var layer = new PIXI.display.Layer();
 
 /** Image filters */
-var filters = {
+const filters = {
     rainbow: new PIXI.filters.ColorMatrixFilter(),
+    // flashing: new PIXI.filters.BevelFilter(),
 }
 
 /* ------ Utility functions ------ */
@@ -56,6 +57,7 @@ function spriteFix(sprite, anchors=true) {
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 1;
     }
+    // sprite.filters = [filters.rainbow];
 }
 
 /** Play/pause a sprite depending on if the game is running */

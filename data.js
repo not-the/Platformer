@@ -171,12 +171,14 @@ const objectTemplate = {
 
         type: 'default',
         player: false,
+        form: 'small',
         enemy: false,
         ai_info: false,
         deal_damage: false,
-        immune: ['enemy', 'sharp'],
-        bounces_player: true,
-        interacts: [], // If interacts with interactable tiles - 'b' below, 's', sides
+        immune: ['enemy', 'sharp'], // Damage type immunity list
+        bounces_player: true,       // If players will bounce off of this
+        interacts: [],              // If interacts with interactable tiles - 'b' below, 's', sides
+        powers_up: false,           // Determines if powerups change state
 
         doMotion: true,
         collision: true,
@@ -220,10 +222,10 @@ const objectTemplate = {
         type: 'mario',
         player: 1,
         // enemy: false,
-        control: 'player',
         deal_damage: 'player',
-        immune: ['player'],
+        immune: ['player', 'under'],
         interacts: ['b'],
+        powers_up: true,
 
         doMotion: true,
         collision: true,
@@ -248,10 +250,10 @@ const objectTemplate = {
         type: 'luigi',
         player: 2,
         // enemy: false,
-        control: 'player',
         deal_damage: 'player',
-        immune: ['player'],
+        immune: ['player', 'under'],
         interacts: ['b'],
+        powers_up: true,
 
         doMotion: true,
         collision: true,
@@ -270,6 +272,32 @@ const objectTemplate = {
         traction: 1.005,
         air_traction: 1,
     
+        facing: 1,
+    },
+
+    // Mega Man
+    'megaman': {
+        texture: 'megaman_big_still',
+    
+        type: 'megaman',
+        player: 1,
+        form: 'big',
+        // deal_damage: 'player',
+        immune: ['player'],
+        interacts: ['b'],
+
+        animate_by_state: true,
+    
+        accel_x: 0.5,
+        air_accel: 0.5,
+        walk: 2.15,
+        run: 2.15,
+        jump_accel: 5.5,
+        jump_accel_super: 5.5,
+        traction: 0.9,
+        air_traction: 0.9,
+        gravity_multiplier: 1,
+
         facing: 1,
     },
 
@@ -654,6 +682,7 @@ const objectTemplate = {
     // Projectile
     'fireball': {
         texture: 'fireball',
+        texture_dead: 'fire_poof',
 
         type: 'fireball',
         player: false,
@@ -681,6 +710,37 @@ const objectTemplate = {
         air_accel: 3,
         walk: 3,
         jump_accel: 3.2,
+
+        facing: 1,
+        no_mirror: true,
+    },
+    'lemon': {
+        texture: 'lemon',
+
+        type: 'lemon',
+        player: false,
+        enemy: 'fireball',
+        ai_info: {
+            auto_walk: true,
+            dissipate_at_wall: true, // temporary, should be false
+            despawn_on_unload: true,
+        },
+        bounces_player: false,
+        immune: ['under', 'player'],
+        deal_damage: 'player',
+        interacts: ['b', 's', 'a'],
+
+        doMotion: true,
+        collision: true,
+        friction: false,
+        animate_by_state: false,
+        traction: 1,
+        air_traction: 1,
+
+        accel_x: 5,
+        air_accel: 5,
+        walk: 5,
+        gravity_multiplier: 0,
 
         facing: 1,
         no_mirror: true,
@@ -1068,6 +1128,60 @@ const structures = {
 
 
 const powers = {
+    // Temporary - Mega Man projectiles/animations
+    'big': {
+        action: object => {
+            if(object.type !== 'megaman') return;
+
+            // Fire
+            if(object.projectiles >= 3) return;
+            if(object.projectiles < 0) object.projectiles = 0;
+            object.power_anim = 15;
+            // Turn around
+            if(pressed[object.controls.left]) object.facing = -1;
+            if(pressed[object.controls.right]) object.facing = 1;
+            spawn('lemon', object.s.x+object.facing*24, object.s.y-30, {facing: object.facing, lifespan: 7000 }, { owner: object });
+            object.projectiles++;
+        },
+        animate: object => {
+            if(object.type !== 'megaman') return;
+            if(!object.power_anim) return;
+
+            /* ----- Animate ----- */
+            // Override
+            if(object.sprite_override) {
+                object.s.textures = anim[object.sprite_override];
+            }
+
+            // Crouch
+            else if(object.crouching) {
+                object.s.textures = anim[`${object.type}_${object.form}_crouch_firing`];
+            }
+            // Jump
+            else if(!object.grounded) {
+                if(!object.jump_ready) object.s.textures = anim[`${object.type}_${object.form}_jump_firing`];
+                else object.s.textures = anim[`${object.type}_${object.form}_fall_firing`];
+            }
+            // Turn
+            else if(
+                object.controls.right && Math.sign(object.motion.x) == -1
+                || object.controls.left && Math.sign(object.motion.x) == 1
+            ) {
+                object.s.textures = anim[`${object.type}_${object.form}_turn_firing`];
+            }
+            // Run
+            else if(object.controls.right || object.controls.left) {
+                if(object.s.textures != anim[`${object.type}_${object.form}_run_firing`]) {
+                    object.s.textures = anim[`${object.type}_${object.form}_run_firing`];
+                    playPauseSprite(object.s);
+                }
+            }
+            // Still
+            else {
+                object.s.textures = anim[`${object.type}_${object.form}_still_firing`];
+            }
+        }
+    },
     'parkour': {
         animate: object => {
             // Wall slide

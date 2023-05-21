@@ -16,14 +16,23 @@ function join(method='keyboard', gamepad_index) {
         'gamepad_index':    gamepad_index,
     };
 
-    console.log(`PLAYER (${playerID}) joined with ${method}`);
+    /** Product code -> Name */
+    // const controllers  = { "09cc)": "Dualshock", }
+    /** Product code -> PNG */
+    // const method_icons = { "09cc)": "gamepad_ps", }
+
+    // const gp = navigator.getGamepads()[gamepad_index];
+    // const product = gp.id.split(' ')[7];
+    // console.log(product);
+    console.log(`PLAYER (${playerID}) joined using a ${method} ()`);
 
     /** Update players menu */
+    let method_img = /*method_icons[product] || */method;
     const element = document.getElementById(`player_${playerID}`);
     element.classList.remove('inactive');
     element.innerHTML = `
     <div class="box">
-        <img src="./assets/ui/${method}.png" alt="" title="${method}">
+        <img src="./assets/ui/${method_img}.png" alt="" title="${method}">
         <figcaption>${playerID}</figcaption>
     </div>
     <input type="button" value="Identify" onclick="gamepadVibrate(${gamepad_index})"${method === 'gamepad' ? '' : ' disabled'}>
@@ -126,7 +135,6 @@ class physicsObject {
         this.s = new PIXI.AnimatedSprite(anim[this.texture]);
 
         // State
-        this.form = 'small';
         this.speed_x = this.walk; // Current max horizontal speed, changes when running
         this.gravity_present = 1;
         this.grounded = false;
@@ -168,6 +176,7 @@ class physicsObject {
         /** Run even if paused */
         if(this.player) this.controlsHandler();
 
+        /** Paused */
         if(world.paused) return;
         if(this.ghost) return this.despawn(); // Editor ghost
         
@@ -177,8 +186,8 @@ class physicsObject {
 
         if(this.unloaded || !this.s.visible) return; // Unloaded
         if(this.doMotion) this.physics();
-        if(this.control == 'player') this.playerControls();
-        else if(this.ai_info) this.ai();
+        if(this.player) this.playerControls(); /** Player controlled */
+        else if(this.ai_info) this.ai(); /** AI controlled */
         if(this.animate_by_state) this.animations();
     }
 
@@ -492,7 +501,7 @@ class physicsObject {
         }
         // Using power
         else if(this.power_anim > 0) {
-            this.s.textures = anim[`${this.type}_${this.form}_throw`];
+            if(this.form === 'fire') this.s.textures = anim[`${this.type}_${this.form}_throw`];
             this.power_anim--;
         }
 
@@ -554,7 +563,7 @@ class physicsObject {
         let holding_l_or_r = (this.controls.left || this.controls.right);
 
         // Parkour moveset
-        if(this.form == 'parkour') {
+        if(this.form === 'parkour') {
             // Wall slide
             let wall_attached = (this.colliding.l || this.colliding.r);
             if(wall_attached && holding_l_or_r && Math.sign(this.motion.y) == 1 && !this.crouching && !this.grounded) {
@@ -590,7 +599,7 @@ class physicsObject {
         }
 
         // Jump button (any time)
-        if(this.controls.jump) {
+        if(this.controls.jump && !this.jump_ready) {
             this.powerJump();
         }
 
@@ -733,6 +742,7 @@ class physicsObject {
                     function kick() { subject.motion.x = subject.motion.x === 0 ? dir : 0; }
                     break;
                 case 'powerup':
+                    if(!this.powers_up) return;
                     let power = subject.type;
                     subject.despawn();
                     if(this.form != 'small' && power == 'big') return;
@@ -814,7 +824,7 @@ class physicsObject {
     bounce(source, x=0, y=-3, allow_high_bounce=true) {
         if(allow_high_bounce) this.jumping = true;
         if(this.controls.jump) y -= 3; /** Higher if holding jump */
-        if(source) y += source.motion.y; /** Bounce higher if lower object is moving up */
+        if(source?.motion?.y !== undefined) y += source.motion.y; /** Bounce higher if lower object is moving up */
         this.motion.y = y;
         if(x != 0) this.motion.x = x;
     }
@@ -845,7 +855,7 @@ class physicsObject {
     /** Player death */
     deathPlayer() {
         this.animate_by_state = false;
-        this.s.textures = anim[`${this.type}_dead`];
+        if(anim[`${this.type}_dead`]) this.s.textures = anim[`${this.type}_dead`];
         this.collision = false;
         this.doMotion = false;
 
@@ -902,7 +912,7 @@ class physicsObject {
             case 'shell':
                 this.genericDeathAnimation(dir);
             case 'fireball':
-                spawn('particle', this.s.x, this.s.y, { texture: 'fire_poof', doMotion: false, animation_speed: 0.2, lifespan: 200, });
+                spawn('particle', this.s.x, this.s.y, { texture: this.texture_dead || 'none', doMotion: false, animation_speed: 0.2, lifespan: 200, });
                 this.despawn();
                 break;
             default:

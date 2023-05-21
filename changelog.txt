@@ -1,3 +1,10 @@
+v0.12
+- Fixed a crash when bouncing a mushroom by hitting the block it's on
+- Fixed a crash when a player-controlled enemy dies
+- Added playable Mega Man (WIP)
+- Players are now bounced instead of hurt if the block under them is hit
+
+
 v0.11
 - Controller support + local multiplayer
     > Mario is player 1 and Luigi is player 2, by default. They can both be assigned to players 3 and 4 through the console (for now)
