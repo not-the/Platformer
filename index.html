@@ -36,7 +36,7 @@
                         </tr>
                     </table>
 
-                    <input type="button" value="Create level" onclick="importLevel(false)" class="fullwidth">
+                    <input type="button" value="Create level" onclick="importLevel(false, undefined, true)" class="fullwidth">
                 </div>
 
                 <!-- Edit -->
@@ -99,7 +99,7 @@
                         <input type="checkbox" name="setting_controls" id="setting_controls" class="setting">
                         Touchscreen controls
                     </label>
-                    <br/>
+                    <br/><br/>
                     <footer>
                         <h2>About</h2>
                         <p>Created by <a href="https://github.com/not-the/" target="_blank" rel=“noreferrer”>not-the</a></p>
@@ -183,7 +183,7 @@
     <div id="debug"></div>
 
     <!-- Tools -->
-    <div class="tools">
+    <div id="tools">
         Draw:
         <select name="drawtile" id="drawtile" style="min-width: 240px">
             <option value="tile/_" selected>erase</option>
@@ -314,7 +314,7 @@
     </div>
 
     <!-- Help -->
-    <div id="help">
+    <!-- <div id="help">
         <b>Controls</b>
         <table>
             <tr>
@@ -334,7 +334,7 @@
                 <td>E</td>
             </tr>
         </table>
-    </div>
+    </div> -->
 
     <!-- Touch controls -->
     <div class="controls flex">

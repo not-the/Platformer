@@ -48,7 +48,14 @@ function gamepadVibrate(id) {
         duration: 300,
         weakMagnitude: 1.0,
         strongMagnitude: 1.0,
-    })
+    });
+
+    // Vibrate img
+    const img = event.srcElement.parentNode.querySelector('img');
+    img.classList.add('vibrate');
+    setTimeout(() => {
+        img.classList.remove('vibrate');
+    }, 350);
 }
 
 
@@ -417,8 +424,18 @@ class physicsObject {
 
         // Determine if movement is allowed
 
+        // Camera edge - Prevent going off-camera
+        if(this.player != false && this.collision) {
+            let left = (this.s.x < (app.stage.x*-1) + 24);
+            let right = (this.s.x > (app.stage.x*-1) + app.stage.width - 120);
+            // Left
+            if(left || right) allowXMotion = false;
+            if(left) this.s.x = (app.stage.x*-1)+24;
+            if(right) this.s.x = (app.stage.x*-1) + app.stage.width - 120;
+        }
+
         // Left wall
-        if(this.s.x % 48 < 24 && this.collision) {  
+        if(this.s.x % 48 < 24 && this.collision) {
             if(
                 tileDataset[adj.left.type].collision.r
                 || (tall && tileDataset[adj.upleft.type].collision.r)
@@ -429,8 +446,6 @@ class physicsObject {
             }
             adj.left.data.collide('r', adj.left, this);
             if(tall) adj.upleft.data.collide('r', adj.upleft, this);
-
-
         }
         this.colliding.l = (this.s.x % 48 <= 24 && tileDataset[adj.left.type].collision.r);
 
@@ -726,10 +741,10 @@ class physicsObject {
 
         // Interactions
         if(this?.ai_info.auto_ride?.includes(subject.type) && top) this.ride(subject); // Auto ride
-        if(this.player && subject.bounces_player && top && !this.star_mode) this.bounce(subject); // Player bounce
+        if(this.player != false && subject.bounces_player && top && !this.star_mode) this.bounce(subject); // Player bounce
 
         // Unique behavior
-        if(this.player) {
+        if(this.player != false) {
             switch (subject.enemy) {
                 // Shell
                 case 'shell':
@@ -990,6 +1005,7 @@ function tile(type='ground', x=0, y=0, contained) {
 
     /** Editor click */
     function draw(event, skip=false) {
+        if(!world.editing) return;
         if(!pressed['leftClick'] && !skip) return;
         let value = drawSel.value;
         let [space, name] = value.split('/');
@@ -1037,7 +1053,11 @@ function reset() {
 }
 
 /** Import level */
-function importLevel(data=false, type='url') {
+function importLevel(data=false, type='url', editor=false) {
+    console.log(editor);
+    world.editing = false;
+    if(type === 'url') world.level = data;
+
     // Import from local file
     if(type === 'upload') {
         console.log('EEEEEEEEEEE');
@@ -1082,6 +1102,10 @@ function importLevel(data=false, type='url') {
     htmlMenu('creation', false);
     updateLevelOptions();
     panCamera();
+    resetHud();
+
+    if(editor) prepEditor();
+    else pause(false);
 
     function generate(imported) {
         const level = imported.level;
@@ -1108,6 +1132,7 @@ importLevel(world.level);
 
 /** Resizes the current level */
 function resizeLevel(dir, axis='x') {
+    if(!world.editing) return console.log('resizeLevel: Not in editor mode, cannot resize');
     // Increase
     if(axis === 'x') {
         if(dir == 1) {
@@ -1178,31 +1203,38 @@ function collectCoin(visual=false, x, y) {
 
 
 // HUD
-var hudLives = new PIXI.Text('hud', new PIXI.TextStyle({
-    fontFamily: 'visitor',
-    fontSize: 40,
-    // fontStyle: 'italic',
-    // fontWeight: 'bold',
-    // fill: ['#ffffff', '#00ff99'], // gradient
-    fill: '#ffffff',
-    // stroke: '#4a1850',
-    // strokeThickness: 5,
-    dropShadow: true,
-    dropShadowAngle: Math.PI / 4,
-    dropShadowColor: '#000000',
-    dropShadowDistance: 5,
-    dropShadowAlpha: 0.6,
-    wordWrap: true,
-    wordWrapWidth: 440,
-    lineJoin: 'round',
-}));
-hudLives.zIndex = 5;
-hudLives.x = 12;
-hudLives.y = 3;
-app.stage.addChild(hudLives);
+var hudLives;
+function resetHud() {
+    deleteSprite(hudLives);
+    hudLives= new PIXI.Text('hud', new PIXI.TextStyle({
+        fontFamily: 'visitor',
+        fontSize: 40,
+        // fontStyle: 'italic',
+        // fontWeight: 'bold',
+        // fill: ['#ffffff', '#00ff99'], // gradient
+        fill: '#ffffff',
+        // stroke: '#4a1850',
+        // strokeThickness: 5,
+        dropShadow: true,
+        dropShadowAngle: Math.PI / 4,
+        dropShadowColor: '#000000',
+        dropShadowDistance: 4,
+        dropShadowAlpha: 1,
+        wordWrap: true,
+        wordWrapWidth: 440,
+        lineJoin: 'round',
+    }));
+    hudLives.zIndex = 5;
+    hudLives.x = 12;
+    hudLives.y = 3;
+    app.stage.addChild(hudLives);
+
+    updateHud();
+}
 function updateHud() {
     hudLives.text = `Lives x-  Coins x-`;
 }
+resetHud();
 updateHud();
 
 
@@ -1258,9 +1290,11 @@ function buildMenu(id='main') {
         }
 
         // Prepare for next
+        world.menu = id;
         menuID++;
     }
 
+    world.editing = (id === 'editor');
 }
 buildMenu();
 
@@ -1271,19 +1305,26 @@ function destroyMenu() {
         deleteSprite(element);
     }
     menuElements = {};
+    menuID = 0;
+    world.menu = false;
 }
 
 /** Escape key */
 function menuKey() {
     if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
     else if(!gamespace.classList.contains('hide_players')) htmlMenu('players', false);
+    else if(world.menu === 'editor') buildMenu('main');
     else {
+        // Pause game & open menu
+        toggleMenu(!world.paused);
+        pause();
+
         for(spr of app.stage.children) {
             // Stop animations
             if(spr.stop != undefined) playPauseSprite(spr);
     
             // Editor preview
-            if(world.paused) {
+            if(world.paused && world.editing) {
                 try {
                     if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true}); /** Make container contents visible */
                     if(spr?.type == 'invis_question') spawn('particle', spr?.x, spr?.y, {texture:'invis_question', ghost:true}); /** Make invisible question blocks visible */
@@ -1291,20 +1332,16 @@ function menuKey() {
                 catch (error) { console.warn(error); }
             }
         }
-
-        // Pause game & open menu
-        pause();
     }
 }
 
 /** Pause/Unpause */
 function pause(state=undefined) {
-    toggleMenu();
     world.paused = state === undefined ? !world.paused : state;
 }
 
 /** Toggle main menu */
-function toggleMenu(state=!world.paused) {
+function toggleMenu(state=false) {
     state ? buildMenu() : destroyMenu();
 }
 
@@ -1312,6 +1349,11 @@ function toggleMenu(state=!world.paused) {
 function htmlMenu(id='creation', state=true, pane='create') {
     document.location.hash = state ? `#${pane}` : '';
     style(gamespace, `hide_${id}`, !state);
+}
+
+function prepEditor() {
+    pause(true);
+    buildMenu('editor');
 }
 
 
@@ -1335,21 +1377,14 @@ function gameTick(delta, repeat=false) {
         /* if(gamespeed < gs) */ gamespeed = gs;
     }
 
-    // Cheats
-    if(pressed['arrowright'] || pressed['arrowleft'] || pressed['arrowup'] || pressed['arrowdown']) cheats.freecam = true;
-    if(cheats.freecam) {
+    // Editor
+    if(world.editing && world.paused) {
         let dis = pressed['shift'] ? 10 : 4;
-        if(pressed['arrowright']) app.stage.x -= dis;
-        if(pressed['arrowleft']) app.stage.x += dis;
-        if(pressed['arrowup']) app.stage.y += dis;
-        if(pressed['arrowdown']) app.stage.y -= dis;
+        if(pressed['arrowright'] || pressed['d']) panCamera(app.stage.x - dis);
+        if(pressed['arrowleft'] || pressed['a']) panCamera(app.stage.x + dis);
+        if(pressed['arrowup'] || pressed['w']) panCamera(undefined, app.stage.y + dis);
+        if(pressed['arrowdown'] || pressed['s']) panCamera(undefined, app.stage.y - dis);
     }
-
-
-
-    // UI (temporary)
-    hudLives.x = (app.stage.x*-1) + 12;
-    hudLives.y = -48;
 
     // Physics
     for(let [key, object] of Object.entries(physicsObjects)) object.tick();
@@ -1514,7 +1549,12 @@ function gameTick(delta, repeat=false) {
 }
 
 /** Determines average player's location and pans the camera there */
-function panCamera() {
+function panCamera(x, y) {
+    let origin = {
+        x: app.stage.x,
+        y: app.stage.y,
+    }
+    // Average player position
     let range = [0, 25]; // 0-24 is the screen
     let posX = [];
     let posY = [];
@@ -1524,18 +1564,23 @@ function panCamera() {
     const sleft = (posX < (app.view.width * 2/5) - app.stage.x);
     const sright = (posX > (app.view.width * 3/5) - app.stage.x);
     if(
-        ( sleft || sright ) && !cheats.freecam
+        ( sleft || sright )
     ) {
         // Limit calculation
         let sectionX = sleft ? 2/5 : 3/5;
-        posX = (posX * -1) + app.view.width * sectionX;
+        posX = (posX * -1) + app.view.width * sectionX; // Automatic
         const limitX = stage.length * -48 + 1200;
+
+        // Manual
+        if(x != undefined) posX = x;
 
         if(posX > 0) posX = 0; // Left limit
         if(posX < limitX) posX = limitX; // Right limit
         if(app.stage.scale.x == 1) app.stage.x = posX; // Update position
-        try { hudLives.x = app.stage.x*-1; /* Match HUD */ }
-        catch (error) { console.warn(error); }
+        try { /* Needs a catch because it tries to run before the values exist */
+            hudLives.x = (app.stage.x*-1) + 12;
+            hudLives.y = (app.stage.y);
+        } catch (error) { } 
 
         // Update rendered region
         let left = Math.floor(convertCoord(Math.round(app.stage.x)*-1, 0, true)[0]);
@@ -1557,17 +1602,28 @@ function panCamera() {
     const stop = (posY > (app.view.height * 0.3) - app.stage.y);
     const sbottom = (posY < (app.view.height * 0.7) - app.stage.y);
     if(
-        (stop || sbottom) && !cheats.freecam
+        (stop || sbottom)
     ) {
         let sectionY = stop ? 0.7 : 0.3;
-        posY = (posY * -1) + app.view.height * sectionY;
+        posY = (posY * -1) + app.view.height * sectionY; // Automatic
         const limitY = stage[0].length * -48 + 864;
+
+        // Manual
+        if(y != undefined) posY = y;
         
         if(posY > 190) posY = 192; // limitY limit
         if(posY < limitY) posY = limitY; // Lower limit
         if(app.stage.scale.y == 1) app.stage.y = posY - 144; // Update position
         try { hudLives.y = app.stage.y*-1; /* Match HUD */ }
         catch (error) { console.warn(error); }
+    }
+
+    // Move UI
+    for(let [key, element] of Object.entries(menuElements)) {
+        element.x += (app.stage.x - origin.x)*-1;
+        element.y += app.stage.y - origin.y;
+        if(element.label) element.label.x += (app.stage.x - origin.x)*-1;
+        if(element.label) element.label.y += app.stage.y - origin.y;
     }
 }
 
@@ -1647,6 +1703,13 @@ document.querySelector('canvas').addEventListener('wheel', event => {
     app.stage.scale.y = factor;
 })
 
+/** Settings Checkboxes */
+document.querySelectorAll('.setting').forEach(element => {
+    element.addEventListener('change', event => {
+        setting(event.srcElement.id.split('_')[1]);
+    });
+})
+
 // Hash changes
 addEventListener("hashchange", event => {
     document.querySelectorAll('.tabs > a').forEach(element => { element.classList.remove('selection'); });
@@ -1657,14 +1720,11 @@ if(location.hash === "#dev") toggleMenu(0); // Skip main menu if in dev mode
 // Page loses focus
 window.onblur = () => { pressed = {}; }
 
+/** Set touch controls visibility */
 setting('controls', (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)));
-document.querySelectorAll('.setting').forEach(element => {
-    element.addEventListener('change', event => {
-        setting(event.srcElement.className.split('_')[1]);
-    });
-})
 
 
+console.log(history);
 // beforeunload
 // window.onbeforeunload = event => {
 //     alert("Unsaved changes will be lost"); //Gecko + Webkit, Safari, Chrome etc.

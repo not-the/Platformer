@@ -259,6 +259,11 @@ table * { text-align: left; }
 #players .players_slot img {
     width: 85%;
 }
+.vibrate { animation: vibrate 0.05s linear infinite alternate; }
+@keyframes vibrate {
+    0% { transform: translateX(-5px); }
+    100% { transform: translateX(5px); }
+}
 #players .players_slot figcaption {
     text-align: center;
     background-color: #e6e8eb;
@@ -292,12 +297,12 @@ table * { text-align: left; }
 /* Loader */
 #loader {
     position: absolute;
-    background-color: var(--border-color);
+    background-color: rgb(80, 80, 80);
     top: 0; right: 0; bottom: 0; left: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: 0.25s opacity ease;
+    transition: 0.2s opacity ease;
     pointer-events: none;
 }
 #loader img {
@@ -314,7 +319,7 @@ table * { text-align: left; }
 
 
 /* Old tools */
-.tools {
+#tools {
     background-color: rgb(20, 20, 20);
     border: 1px solid rgb(65, 65, 65);
     border-radius: 4px;
@@ -322,7 +327,7 @@ table * { text-align: left; }
     margin: 4px;
     padding: 8px;
 }
-.tools img {
+#tools img {
     min-width: 38px;
     min-height: 38px;
     padding: 2px;
@@ -330,10 +335,10 @@ table * { text-align: left; }
     transition: transform 0.1s ease-out;
     border-radius: 0;
 }
-.tools img:hover {
+#tools img:hover {
     transform: scale(1.25, 1.25);
 }
-.tools img.selection {
+#tools img.selection {
     border-color: white;
     border-radius: 4px;
     background-color: rgb(65, 65, 65);

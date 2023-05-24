@@ -1,32 +1,57 @@
 const world = {
-    paused: false,
+    // World
+    paused: true,
+    editing: false,
     spawn_temporary: [3, 6],
+
+    // UI
+    menu: 'main',
+
 
     // Horizontal
     resist_x: 0.98, // 1 being no resistance at all
     air_resist_x: 0.98,
-    // air_resist_x: 0.999,
     absolute_slow: 0.01, // Slowest X speed possible before motion is rounded down to 0
 
     // Vertical
     gravity:  0.15,
 
+    // Current level
     level: './levels/test.json',
     
-    // Temporary
-    coins: 0,
+    // Score
+    coins: 0, // temporary?
+}
+
+const mappings = {
+    'keyboard': {
+        start:  'escape',
+        up:     'w',
+        left:   'a',
+        right:  'd',
+        down:   's',
+        run:    'shift',
+        jump:   ' ',
+        action: 'e',
+    },
+    'gamepad': {
+        start:  9,
+
+        up:     12,
+        left:   14,
+        right:  15,
+        down:   13,
+        run:    2,
+        jump:   0,
+        action: 3,
+    },
 }
 
 /** DEBUG */
 const zoomLevels = [0.1, 0.3, 0.5, 0.75, 1, 1.5, 2];
 var cheats = {
-    freecam: false,
     zoom: 4,
 }
-// function freecam() {
-
-// }
-
 
 /** Main Menu */
 const menus = {
@@ -48,6 +73,14 @@ const menus = {
             click: () => {
                 if(world.paused) pause();
                 toggleMenu(false);
+            },
+        },
+        { // temporary
+            'label': 'EDIT',
+            x: 524,
+            y: 168,
+            click: () => {
+                prepEditor();
             },
         },
         {
@@ -123,42 +156,102 @@ const menus = {
             y: -48,
         },
         {
-            texture: 'button_large',
-            'label': '<- Back',
+            texture: 'button_small',
+            'label': 'Back',
             x: 64,
-            y: 48,
+            y: 32,
             click: () => {
                 buildMenu('main');
             },
         },
+
+        // Col 1
         {
             texture: 'button_large_blue',
             'label': 'TEST',
             x: 64,
-            y: 192,
+            y: 128,
             click: () => { importLevel('./levels/test.json') },
         },
         {
             texture: 'button_large_blue',
             'label': 'Super Mario Bros. 1-1',
             x: 64,
-            y: 288,
+            y: 224,
             click: () => { importLevel('./levels/1-1.json') },
         },
         {
             texture: 'button_large_blue',
             'label': 'user1',
             x: 64,
-            y: 384,
+            y: 320,
             click: () => { importLevel('./levels/user1.json') },
         },
         // {
         //     texture: 'button_large_blue',
         //     'label': 'user2',
         //     x: 64,
-        //     y: 480,
+        //     y: 416,
         //     click: () => { importLevel('./levels/user2.json') },
         // },
+
+        // Col 2
+        // {
+        //     texture: 'button_large_blue',
+        //     'label': 'PLACEHOLDER',
+        //     x: 524,
+        //     y: 128,
+        //     click: () => { importLevel('./levels/test.json') },
+        // },
+        // {
+        //     texture: 'button_large_blue',
+        //     'label': 'PLACEHOLDER',
+        //     x: 524,
+        //     y: 224,
+        //     click: () => { importLevel('./levels/test.json') },
+        // },
+        // {
+        //     texture: 'button_large_blue',
+        //     'label': 'PLACEHOLDER',
+        //     x: 524,
+        //     y: 320,
+        //     click: () => { importLevel('./levels/test.json') },
+        // },
+        // {
+        //     texture: 'button_large_blue',
+        //     'label': 'PLACEHOLDER',
+        //     x: 524,
+        //     y: 416,
+        //     click: () => { importLevel('./levels/test.json') },
+        // },
+
+        // Next/previous
+        // {
+        //     texture: 'half_button_small',
+        //     'label': '<- Prev',
+        //     x: 64,
+        //     y: 520,
+        //     click: () => {
+        //         buildMenu('main');
+        //     },
+        // },
+        // {
+        //     texture: 'half_button_small',
+        //     'label': 'Next ->',
+        //     x: 284,
+        //     y: 520,
+        //     click: () => {
+        //         buildMenu('main');
+        //     },
+        // },
+    ],
+
+    editor: [
+        {
+            texture: 'toolbar',
+            x: 0,
+            y: -48,
+        },
     ],
 }
 
@@ -235,8 +328,8 @@ const objectTemplate = {
         // x: 3,
         // y: 11,
     
-        accel_x: 0.075,
-        air_accel: 0.075,
+        accel_x: 0.085,
+        air_accel: 0.085,
         walk: 2.5,
         run: 5,
         jump_accel: 6.4,
@@ -263,8 +356,8 @@ const objectTemplate = {
         x: 3,
         y: 11,
     
-        accel_x: 0.05,
-        air_accel: 0.075,
+        accel_x: 0.063,
+        air_accel: 0.085,
         walk: 2.5,
         run: 5,
         jump_accel: 7,
@@ -290,13 +383,13 @@ const objectTemplate = {
     
         accel_x: 0.5,
         air_accel: 0.5,
-        walk: 2.15,
-        run: 2.15,
-        jump_accel: 5.5,
-        jump_accel_super: 5.5,
+        walk: 2.5,
+        run: 2.5,
+        jump_accel: 7,
+        jump_accel_super: 7,
         traction: 0.9,
         air_traction: 0.9,
-        gravity_multiplier: 1,
+        gravity_multiplier: 1.4,
 
         facing: 1,
     },
@@ -764,6 +857,20 @@ const objectTemplate = {
     
         facing: 1,
     },
+    'flag': {
+        texture: 'flag',
+    
+        type: 'flag',
+        bounces_player: false,
+
+        doMotion: true,
+        collision: false,
+        friction: false,
+    
+        gravity_multiplier: 0,
+    },
+
+    data: { texture: 'flag', friction: false, gravity_multiplier: 0, }
 }
 
 class tileData {
@@ -1120,8 +1227,9 @@ const structures = {
         { tile: 'pole', move: [0, -1] },
         { tile: 'pole', move: [0, -1] },
         { tile: 'pole', move: [0, -1] },
+        { tile: 'pole', move: [0, -1] },
         { tile: 'pole_top', move: [0, 1] },
-        { entity: 'particle', move: [0, 0], data: { texture: 'flag', friction: false, gravity_multiplier: 0, }}
+        { entity: 'flag', move: [0, 0] }
     ],
 }
 

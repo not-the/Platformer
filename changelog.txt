@@ -1,11 +1,28 @@
-v0.12
-- Fixed a crash when bouncing a mushroom by hitting the block it's on
-- Fixed a crash when a player-controlled enemy dies
+v0.13   May 23, 2023
+- Basic editor mode (WIP)
+- Made it so that you can no longer walk off the screen
+- Clicking "identify" for a controller will now shake the icon on screen
+- Freecam can no longer be panned outside the stage
+- Freecam now correctly changes the culled/unculled region
+- WASD now work for freecam, and freecam is now editor mode only
+- Buffed Mario & Luigi's acceleration values (and by consequence their walk+run speeds), to be more in line with the games
+    + Mario acceleration:   0.075 -> -0.085
+- Mega Man:
+    + Walk:                 2.15 -> 2.5
+    + Gravity:              1    -> 1.4
+    + Jump:                 5.5  -> 7
+- Fixed the HUD (lives/coin counter) not panning up/down, occasionally jittering, and not being rendered on top
+- Fixed players that weren't player 1 not bouncing off of enemies
+
+
+v0.12   May 20, 2023
 - Added playable Mega Man (WIP)
 - Players are now bounced instead of hurt if the block under them is hit
+- Fixed a crash when bouncing a mushroom by hitting the block it's on
+- Fixed a crash when a player-controlled enemy dies
 
 
-v0.11
+v0.11   May 19, 2023
 - Controller support + local multiplayer
     > Mario is player 1 and Luigi is player 2, by default. They can both be assigned to players 3 and 4 through the console (for now)
 - Added a player/gamepad management UI
@@ -22,13 +39,13 @@ v0.11
     + Flagpole
 
 
-v0.10
+v0.10   May 16, 2023
 - Slight changes to the main menu
 - Touch controls should no longer appear on non-touch devices
 - Added a touch screen controls toggle to settings
 
 
-v0.9
+v0.9    May 16, 2023
 - Vertical stage support
 - HUD no longer disappears when the camera scrolls
 - Fixed Luigi and Red Koopa causing a crash
@@ -43,7 +60,7 @@ v0.9
 - Drag and drop/upload level functionality + import menu
 
 
-v0.8
+v0.8   April 29, 2023
 - Objects inside containers are now visible while the game is paused
 - Objects placed while paused will now reflect the direction they are facing
 - Using the eraser on a physics object will now work instantly while the game is paused
@@ -65,7 +82,8 @@ v0.8
     + Cloud flower
     + Bullet Bill
 
-v0.7
+
+v0.7   April 17, 2023
 - Powerup that enables wall jumping & ground pounding
 - Physics objects are now stored in an object instead of an array
 - Pressing shift now increases the freecam pan speed
@@ -75,10 +93,10 @@ v0.7
     + Parkour mushroom
 
 
-v0.6
+v0.6   April 13, 2023
 - Off-screen tiles are now culled (horizontally only)
 - Off-screen objects are now frozen and culled
-- Flower functionality
+- Fire Flower functionality
 - Damage sources no longer instantly kill the player
 - Invinicibility period after taking damage
 - Coins and multi coins can now be inserted into containers
@@ -96,7 +114,7 @@ v0.6
     + Castle
 
 
-v0.5
+v0.5   April 10, 2023
 - Bricks now correctly act as containers
 - Jump height is now dependant on how long the jump button is held for
 - Support for entity riding. Goombas will now form a stack when placed above one another
@@ -114,7 +132,7 @@ v0.5
     + Fireball
 
 
-v0.4
+v0.4   April 8, 2023
 - Basic touchscreen controls
 - Interactions with bricks and ? boxes
 - Ability to put items into containers (no visual feedback yet)
@@ -140,7 +158,7 @@ New
     + Luigi
 
 
-v0.3
+v0.3   April 7, 2023
 - Pressing escape pauses the game
 - Added placeable structures
 - Import/export level functionality
@@ -162,7 +180,7 @@ v0.3
     + Shell
 
 
-v0.2
+v0.2   April 7, 2023
 - Interactions between the player and enemies
 - Basic horizontal camera panning
 - Draw tool support for spawning physics objects
@@ -176,7 +194,7 @@ v0.2
     + Bush
 
 
-v0.1
+v0.1   April 5, 2023
 - Collision
 - Reworked physics objects (such as the player) into a class
 - Added a basic enemy AI

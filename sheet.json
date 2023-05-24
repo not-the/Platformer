@@ -11,9 +11,14 @@
         "button_large_blue": "ui/button_large_blue",
         "button_large_blue_hover": "ui/button_large_blue_hover",
 
+        "button_small": "ui/small/button",
+        "half_button_small": "ui/small/half_button",
+
         "half_button": "ui/half_button",
         "small_button": "ui/small_button",
         "small_button_white": "ui/small_button_white",
+
+        "toolbar": "ui/toolbar",
 
 
         "// Small Mario": 0,
