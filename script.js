@@ -1730,12 +1730,13 @@ config_scroll_behavior.addEventListener('change', event => {
 // Debug
 document.querySelector('canvas').addEventListener('wheel', event => {
     event.preventDefault();
-    let dir = Math.sign(event.deltaY)*-1;
-    cheats.zoom += dir;
-    let factor = zoomLevels[cheats.zoom];
-    if(factor == undefined) return cheats.zoom -= dir;
-    app.stage.scale.x = factor;
-    app.stage.scale.y = factor;
+
+    // let dir = Math.sign(event.deltaY)*-1;
+    // cheats.zoom += dir;
+    // let factor = zoomLevels[cheats.zoom];
+    // if(factor == undefined) return cheats.zoom -= dir;
+    // app.stage.scale.x = factor;
+    // app.stage.scale.y = factor;
 })
 
 /** Settings Checkboxes */
