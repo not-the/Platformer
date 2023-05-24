@@ -247,10 +247,56 @@ const menus = {
     ],
 
     editor: [
+        // {
+        //     texture: 'toolbar',
+        //     x: 0,
+        //     y: -48,
+        // },
+
+        // Main menu
         {
-            texture: 'toolbar',
-            x: 0,
-            y: -48,
+            texture: 'small_button',
+            x: 30,
+            y: -24,
+            click: () => {
+                buildMenu('main');
+            }
+        },
+        {
+            texture: 'hamburger',
+            x: 30,
+            y: -24,
+        },
+
+        // Stage config
+        {
+            texture: 'small_button_white',
+            x: 128,
+            y: -24,
+            click: () => {
+                htmlMenu('creation', true, 'edit');
+            }
+        },
+        {
+            texture: 'gear',
+            x: 128,
+            y: -24,
+        },
+
+        // Toolbox
+        {
+            texture: 'small_button_white',
+            x: 1089,
+            y: -24,
+            click: () => {
+                htmlMenu('tools', true);
+            }
+        },
+        {
+            id: 'toolbox_icon',
+            texture: 'hard',
+            x: 1109,
+            y: -6,
         },
     ],
 }
@@ -585,13 +631,13 @@ const objectTemplate = {
         enemy: 'bill',
         ai_info: {
             auto_walk: true,
-            // dissipate_at_wall: true,
+            dissipate_at_wall: true,
         },
         deal_damage: 'enemy',
         // interacts: ['b', 's', 'a'],
 
         doMotion: true,
-        collision: false,
+        collision: true,
         friction: false,
         animate_by_state: false,
         traction: 1,
@@ -619,7 +665,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
 
         doMotion: true,
         collision: true,
@@ -651,7 +697,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
 
         doMotion: true,
         collision: true,
@@ -677,7 +723,7 @@ const objectTemplate = {
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
         tiered_powerup: true,
 
         doMotion: true,
@@ -712,7 +758,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
 
         doMotion: true,
         collision: true,
@@ -750,7 +796,7 @@ const objectTemplate = {
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
         tiered_powerup: false,
 
         doMotion: true,
@@ -764,7 +810,7 @@ const objectTemplate = {
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['under'],
+        immune: ['enemy', 'under'],
         tiered_powerup: false, // // //
 
         doMotion: true,
@@ -862,9 +908,10 @@ const objectTemplate = {
     
         type: 'flag',
         bounces_player: false,
+        immune: ['player', 'enemy', 'under'],
 
         doMotion: true,
-        collision: false,
+        collision: true,
         friction: false,
     
         gravity_multiplier: 0,
@@ -956,6 +1003,30 @@ class tileData {
                 case 'coin':
                     collectCoin();
                     this.set(tile, '_');
+                case 'flagpole':
+                    if(source.player == false || source.disabled) break;
+                    console.log(dir);
+                    source.disabled = true;
+                    source.motion = { x:0, y:0, r:0 };
+                    source.gravity_multiplier = 0;
+                    source.s.x -= (source.s.x % 48) - 48;
+                    source.facing = dir==='l'?1:-1;
+                    source.s.textures = anim[`${source.type}_${source.form}_climb1`];
+
+                    // Lower flag
+                    setTimeout(() => {
+                        source.motion.y = 2;
+                        if(world?.flag) world.flag.motion.y = 2;
+
+                        // Walk off
+                        setTimeout(() => {
+                            source.disabled = false;
+                            source.player = false;
+                            source.ai_info = {auto_walk:true};
+                            source.gravity_multiplier = 1;
+                        }, 1000);
+                    }, 1000);
+                    break;
                 default:
                     break;
             }
@@ -1081,13 +1152,13 @@ const tileDataset = {
         texture: anim.pole,
 
         collision: { u: true, },
-        // collisionCode: 'flagpole',
+        collisionCode: 'flagpole',
     }),
     'pole_top': new tileData({
         texture: anim.pole_top,
 
         collision: { u: true, },
-        // collisionCode: 'flagpole',
+        collisionCode: 'flagpole',
     }),
 
     'pipe_top_l': new tileData({

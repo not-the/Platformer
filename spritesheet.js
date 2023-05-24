@@ -2,6 +2,7 @@
 const body = document.querySelector('body');
 const gamespace = document.getElementById('game');
 const drawSel = document.getElementById('drawtile');
+const config_scroll_behavior = document.getElementById('config_scroll_behavior');
 const importInput = document.getElementById("import_level");
 
 // PIXI.js Setup

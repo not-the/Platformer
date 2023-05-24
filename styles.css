@@ -11,6 +11,7 @@
     --link-color: #51a2ff;
 
     --bg: #171718;
+    --overlay-bg: rgba(20, 20, 20, 0.8);
 
     --border-color: rgba(199, 199, 199, 0.3);
 }
@@ -77,9 +78,10 @@ input:focus-visible,
     color: black;
     background-color: white;
     transition-duration: 0.1s;
+    z-index: 1;
 }
 
-input[type="text"], input[type="number"] {
+input[type="text"], input[type="number"], select {
     width: 100%;
     max-width: 300px;
     padding: 4px 14px;
@@ -144,7 +146,7 @@ table * { text-align: left; }
     position: absolute;
     top: 0; right: 0; bottom: 0; left: 0;
 
-    background-color: rgba(20, 20, 20, 0.8);
+    background-color: var(--overlay-bg);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 
@@ -158,10 +160,12 @@ table * { text-align: left; }
     position: absolute;
 }
 #game.hide_creation > #creation,
-#game.hide_players > #players {
+#game.hide_players > #players,
+#game.hide_tools > #tools {
     pointer-events: none !important;
     opacity: 0;
 }
+#game.hide_tools > #tools * { pointer-events: none !important;}
 .ui_box {
     top: 0;
     left: 50%;
@@ -320,23 +324,47 @@ table * { text-align: left; }
 
 /* Old tools */
 #tools {
-    background-color: rgb(20, 20, 20);
-    border: 1px solid rgb(65, 65, 65);
-    border-radius: 4px;
-    width: fit-content;
-    margin: 4px;
-    padding: 8px;
+    /* background-color: rgb(20, 20, 20); */
+    /* border: 1px solid rgb(65, 65, 65); */
+    /* border-radius: 6px; */
+    /* width: fit-content; */
+    /* margin: 4px; */
+    /* padding: 8px; */
+    background-color: transparent;
+    backdrop-filter: unset;
+    pointer-events: none;
 }
+#tools > .container {
+    background-color: var(--overlay-bg);
+    backdrop-filter: blur(12px);
+    /* color: black; */
+    width: 80%;
+    max-width: unset;
+    max-height: 80%;
+    padding: 32px 24px;
+    overflow: auto;
+    
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0 0 9px 9px;
+    pointer-events: all;
+}
+#tools > .container .tabs { position: absolute; }
 #tools img {
-    min-width: 38px;
-    min-height: 38px;
-    padding: 2px;
-    border: 2px solid transparent;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0px;
+    border: 4px solid transparent;
+    border-bottom-width: 8px;
     transition: transform 0.1s ease-out;
-    border-radius: 0;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
 }
 #tools img:hover {
     transform: scale(1.25, 1.25);
+    background-color: white;
 }
 #tools img.selection {
     border-color: white;

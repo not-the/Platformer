@@ -1,3 +1,12 @@
+v0.14   May 24, 2023
+- Moved tile/object toolbox to be an overlay in the game. Open by clicking the block button in the editor
+- "Q" can also be pressed to view the toolbox anywhere
+- Added "Scroll behavior" in stage config 
+- Added a "Can't go left" option
+- Fixed editor objects staying highlighted after deselected
+- Fixed shells not bouncing off of walls
+
+
 v0.13   May 23, 2023
 - Basic editor mode (WIP)
 - Made it so that you can no longer walk off the screen

@@ -2,9 +2,11 @@
     "textures": {
         "title": "ui/title",
         "overlay": "ui/overlay",
+        "hamburger": "ui/hamburger",
         "pause": "ui/pause",
         "gear": "ui/gear",
         "gamepad": "ui/gamepad",
+        "eraser": "ui/eraser",
 
         "button_large": "ui/button_large",
         "button_large_hover": "ui/button_large_hover",
@@ -29,6 +31,8 @@
         "mario_small_jump":  "player1/jump",
         "mario_small_turn":  "player1/turn",
         "mario_small_crouch": "player1/crouch",
+        "mario_small_climb1": "player1/climb1",
+        "mario_small_climb2": "player1/climb2",
         "mario_dead": "player1/dead",
         "mario_medium": "player1/medium",
     
@@ -40,6 +44,8 @@
         "mario_big_jump":  "player1/big/jump",
         "mario_big_turn":  "player1/big/turn",
         "mario_big_crouch": "player1/big/crouch",
+        "mario_big_climb1": "player1/big/climb1",
+        "mario_big_climb2": "player1/big/climb2",
     
         "// Fire mario": 0,
         "mario_fire_still": "player1/fire/still",

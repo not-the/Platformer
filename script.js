@@ -1,8 +1,11 @@
 /** Editor */
 function setEditorTool() {
     drawSel.value = event.srcElement.dataset.value;
-    document.querySelectorAll('.tools img').forEach(e => e.classList.remove('selection'));
+    document.querySelectorAll('#tools img').forEach(e => e.classList.remove('selection'));
     event.srcElement.classList.add('selection');
+    // if(menuElements['toolbox_icon'] !== undefined) menuElements['toolbox_icon'].textures = anim[drawSel.value];
+
+    htmlMenu('tools', false); // Close toolbox
 }
 
 // Players
@@ -88,6 +91,9 @@ function exportLevel() {
         bg: app.renderer.background.color,
         objects: [],
         level: [],
+        config: {
+            scroll_behavior: world.scroll_behavior,
+        }
     };
     for(i in stage) {
         output.level.push([]);
@@ -193,6 +199,8 @@ class physicsObject {
 
         if(this.unloaded || !this.s.visible) return; // Unloaded
         if(this.doMotion) this.physics();
+
+        if(this.disabled) return;
         if(this.player) this.playerControls(); /** Player controlled */
         else if(this.ai_info) this.ai(); /** AI controlled */
         if(this.animate_by_state) this.animations();
@@ -427,11 +435,11 @@ class physicsObject {
         // Camera edge - Prevent going off-camera
         if(this.player != false && this.collision) {
             let left = (this.s.x < (app.stage.x*-1) + 24);
-            let right = (this.s.x > (app.stage.x*-1) + app.stage.width - 120);
+            let right = (this.s.x > (app.stage.x*-1) + app.stage.width - 24);
             // Left
             if(left || right) allowXMotion = false;
             if(left) this.s.x = (app.stage.x*-1)+24;
-            if(right) this.s.x = (app.stage.x*-1) + app.stage.width - 120;
+            if(right) this.s.x = (app.stage.x*-1) + app.stage.width - 24;
         }
 
         // Left wall
@@ -719,7 +727,7 @@ class physicsObject {
 
     /** Shell AI */
     shell() {
-        if(this.dead || !this.collision || this.motion.x === 0) return;
+        if(this.dead || !this.collision) return;
         if(this.colliding.l) this.motion.x = this.walk;
         if(this.colliding.r) this.motion.x = this.walk * -1;
     }
@@ -743,15 +751,19 @@ class physicsObject {
         if(this?.ai_info.auto_ride?.includes(subject.type) && top) this.ride(subject); // Auto ride
         if(this.player != false && subject.bounces_player && top && !this.star_mode) this.bounce(subject); // Player bounce
 
+        // Take damage
+        let takeDamage = ((subject.deal_damage && !nodamage));
+        if(subject.type === 'shell' && subject.motion.x === 0) takeDamage = false;
+        if(takeDamage) this.damage(subject, dir, top);
+
         // Unique behavior
         if(this.player != false) {
             switch (subject.enemy) {
                 // Shell
                 case 'shell':
-                    if(top) kick();
+                    if(top || subject.motion.x === 0) kick();
                     else {
-                        if(subject.motion.x !== 0) this.damage();
-                        else kick();
+                        if(subject.motion.x === 0) kick();
                     }
                     /** Kicks shell */
                     function kick() { subject.motion.x = subject.motion.x === 0 ? dir : 0; }
@@ -781,10 +793,6 @@ class physicsObject {
                     break;
             }
         }
-
-        // Take damage
-        let takeDamage = ((subject.deal_damage && !nodamage));
-        if(takeDamage) this.damage(subject, dir, top);
         
         // Repeat for subject
         if(!stop) subject.interaction(this, true);
@@ -837,6 +845,8 @@ class physicsObject {
 
     /** Bounce off enemy/object */
     bounce(source, x=0, y=-3, allow_high_bounce=true) {
+        if(this.gravity_multiplier === 0) return; // Don't bounce if gravity is disabled
+
         if(allow_high_bounce) this.jumping = true;
         if(this.controls.jump) y -= 3; /** Higher if holding jump */
         if(source?.motion?.y !== undefined) y += source.motion.y; /** Bounce higher if lower object is moving up */
@@ -1054,9 +1064,9 @@ function reset() {
 
 /** Import level */
 function importLevel(data=false, type='url', editor=false) {
-    console.log(editor);
     world.editing = false;
-    if(type === 'url') world.level = data;
+    world.level = data;
+    world.level_data_type = 'url';
 
     // Import from local file
     if(type === 'upload') {
@@ -1126,6 +1136,10 @@ function importLevel(data=false, type='url', editor=false) {
             let m = spawn(obj.type, obj.x, obj.y);
             if(obj.type == 'mario' || obj.type == 'luigi') player1 = m;
         }
+
+        // Update
+        world.scroll_behavior = 'normal' || imported?.config?.scroll_behavior;
+        config_scroll_behavior.value = world.scroll_behavior; // Update edit page
     }
 }
 importLevel(world.level);
@@ -1178,6 +1192,8 @@ function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
     o.s.x = x;
     o.s.y = y;
     o.s.scale.x = o.facing * 3;
+
+    if(name === 'flag') world.flag = o;
 
     // Interactable
     o.s.eventMode = 'static'; // 'none'/'passive'/'auto'/'static'/'dynamic'
@@ -1252,7 +1268,7 @@ function buildMenu(id='main') {
         if(element.texture == undefined) element.texture = 'button_large';
         let tex = element.texture;
         let s = new PIXI.AnimatedSprite(anim[element.texture]);
-        s.id = menuID;
+        s.id = element.id || menuID;
         s.x = offX;
         s.y = offY
         if(element.click) {
@@ -1266,7 +1282,7 @@ function buildMenu(id='main') {
 
         // Add to stage
         app.stage.addChild(s);
-        menuElements[menuID] = s;
+        menuElements[element.id || menuID] = s;
         
         // Label
         if(element.label !== undefined) {
@@ -1313,7 +1329,8 @@ function destroyMenu() {
 function menuKey() {
     if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
     else if(!gamespace.classList.contains('hide_players')) htmlMenu('players', false);
-    else if(world.menu === 'editor') buildMenu('main');
+    else if(!gamespace.classList.contains('hide_tools')) htmlMenu('tools', false);
+    else if(world.menu === 'editor') htmlMenu('tools', true); // buildMenu('main') 
     else {
         // Pause game & open menu
         toggleMenu(!world.paused);
@@ -1337,6 +1354,10 @@ function menuKey() {
 
 /** Pause/Unpause */
 function pause(state=undefined) {
+    // if(world.paused && world.editing) {
+
+    //     return console.warn('Are you sure you want to exit editor mode? Unsaved changes will be lost');
+    // }
     world.paused = state === undefined ? !world.paused : state;
 }
 
@@ -1576,6 +1597,8 @@ function panCamera(x, y) {
 
         if(posX > 0) posX = 0; // Left limit
         if(posX < limitX) posX = limitX; // Right limit
+
+        if(posX > app.stage.x && world.scroll_behavior === 'no_left') return; // no_left
         if(app.stage.scale.x == 1) app.stage.x = posX; // Update position
         try { /* Needs a catch because it tries to run before the values exist */
             hudLives.x = (app.stage.x*-1) + 12;
@@ -1613,6 +1636,7 @@ function panCamera(x, y) {
         
         if(posY > 190) posY = 192; // limitY limit
         if(posY < limitY) posY = limitY; // Lower limit
+
         if(app.stage.scale.y == 1) app.stage.y = posY - 144; // Update position
         try { hudLives.y = app.stage.y*-1; /* Match HUD */ }
         catch (error) { console.warn(error); }
@@ -1649,7 +1673,13 @@ document.addEventListener('keyup', event => {
     delete pressed[key];
 
     // Pause
-    if(key == 'escape') menuKey();
+    if(key === 'escape') menuKey();
+
+    // Temporary / Developer
+    if(key === 'q') {
+        style(gamespace, 'hide_tools', !gamespace.classList.contains('hide_tools'));
+        world.editing = true;
+    }
 })
 
 // Mouse
@@ -1691,6 +1721,11 @@ function setting(name='controls', state='no') {
         style(body, 'show_controls', checkbox.checked);
     }
 }
+
+config_scroll_behavior.addEventListener('change', event => {
+    if(!world.editing) return event.srcElement.value = world.scroll_behavior;
+    world.scroll_behavior = event.srcElement.value;
+})
 
 // Debug
 document.querySelector('canvas').addEventListener('wheel', event => {
