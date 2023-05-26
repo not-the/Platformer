@@ -30,6 +30,9 @@
 }
 
 body {
+    max-height: 100vh;
+    overflow: hidden;
+
     background-color: var(--bg);
     color: white;
 
@@ -64,11 +67,6 @@ input,
 
     transition: background-color 0.2s ease;
 }
-
-a {
-    color: var(--link-color);
-}
-
 button:hover,
 input[type="button"]:hover,
 *[role="button"]:hover,
@@ -102,6 +100,14 @@ input:disabled {
     cursor: unset;
     pointer-events: none;
     opacity: 0.7;
+}
+
+button p {
+    padding: 3px 0 0 6px;
+}
+
+a {
+    color: var(--link-color);
 }
 
 
@@ -336,12 +342,12 @@ table * { text-align: left; }
 }
 #tools > .container {
     background-color: var(--overlay-bg);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(24px);
     /* color: black; */
     width: 80%;
     max-width: unset;
     max-height: 80%;
-    padding: 32px 24px;
+    padding: 0 24px 32px;
     overflow: auto;
     
     position: absolute;
@@ -352,6 +358,9 @@ table * { text-align: left; }
 }
 #tools > .container .tabs { position: absolute; }
 #tools img {
+    /* width: 48px; */
+    /* height: 54px; */
+    /* object-fit: cover; */
     min-width: 44px;
     min-height: 44px;
     padding: 0px;
@@ -369,8 +378,15 @@ table * { text-align: left; }
 #tools img.selection {
     border-color: white;
     border-radius: 4px;
-    background-color: rgb(65, 65, 65);
+    background-color: rgba(255, 255, 255, 1);
     /* padding: 2px; */
+    transform: scale(1.25, 1.25);
+    animation: float 2s ease-in-out infinite;
+}
+@keyframes float {
+    0% { transform: translateY(0px) scale(1.25, 1.25); }
+    50%   { transform: translateY(4px) scale(1.25, 1.25); }
+    100% { transform: translateY(0px) scale(1.25, 1.25); }
 }
 
 /* Touch controls */

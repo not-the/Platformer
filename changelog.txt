@@ -1,3 +1,19 @@
+v0.16   May 26, 2023
+- Sub-level support (import only, needs to be manually added to JSON file after exporting 2 levels)
+- Dying with only one player onscreen will now reset the level. Dying with more than 1 will respawn you at the location of the most recently spawned player
+- Added autoscroll functionality
+- Temporary fix for upward/downward camera movement not working in editor mode
+- Fixed projectiles (fireballs/lemons) becoming infinite
+- Fixed editor camera panning not working if the player is deleted, or more are added
+- Fixed items inside of containers not appearing in editor mode
+- Fixed editor ghosts being clickable
+- Tiles:
+    + Horizontal pipes
+    + Cloud Platform
+    + Conveyor Belts
+    + Conveyor Belts (Fast)
+
+
 v0.15   May 26, 2023
 - Option to change the stage background color
 - Fixed coins acting as flagpoles

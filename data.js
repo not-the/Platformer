@@ -2,23 +2,23 @@ const world = {
     // World
     paused: true,
     editing: false,
-    spawn_temporary: [3, 6],
+
+    // Current level
+    level: './levels/test.json',
+    level_data_type: 'url',
+    sub: 'level',
 
     // UI
     menu: 'main',
-
 
     // Horizontal
     resist_x: 0.98, // 1 being no resistance at all
     air_resist_x: 0.98,
     absolute_slow: 0.01, // Slowest X speed possible before motion is rounded down to 0
-
     // Vertical
     gravity:  0.15,
 
-    // Current level
-    level: './levels/test.json',
-    
+
     // Score
     coins: 0, // temporary?
 }
@@ -76,8 +76,9 @@ const menus = {
             },
         },
         { // temporary
-            'label': 'EDIT',
-            x: 524,
+            texture: 'half_button',
+            'label': 'Editor',
+            x: 500,
             y: 168,
             click: () => {
                 prepEditor();
@@ -187,13 +188,13 @@ const menus = {
             y: 320,
             click: () => { importLevel('./levels/user1.json') },
         },
-        // {
-        //     texture: 'button_large_blue',
-        //     'label': 'user2',
-        //     x: 64,
-        //     y: 416,
-        //     click: () => { importLevel('./levels/user2.json') },
-        // },
+        {
+            texture: 'button_large_blue',
+            'label': 'Wackytown',
+            x: 64,
+            y: 416,
+            click: () => { importLevel('./levels/wackytown.json') },
+        },
 
         // Col 2
         // {
@@ -299,6 +300,14 @@ const menus = {
             y: -6,
         },
     ],
+
+    // dead: [
+    //     {
+    //         texture: 'screen_black',
+    //         x: 0,
+    //         y: -48,
+    //     },
+    // ],
 }
 
 
@@ -989,6 +998,7 @@ class tileData {
         collision: false,
         collisionCode: false,
         slope: false,
+        conveyor_speed: undefined,
 
         container: false,
         contains: false,
@@ -1002,6 +1012,7 @@ class tileData {
         this.sides = data.sides;
         this.collisionCode = data.collisionCode;
         this.slope = data.slope;
+        this.conveyor_speed = data.conveyor_speed;
 
         this.insertable = data.insertable;
         this.container = data.container;
@@ -1091,6 +1102,27 @@ class tileData {
                             }, 3000);
                         }, 1000);
                     }, 1000);
+                    break;
+                case 'warp':
+                    if(!source.crouching) break;
+                case 'warp_right':
+                    if(!source.grounded) break;
+                    if(data.collisionCode === 'warp_right' && !source.controls.right && !source.colliding.r) return;
+                    // source.s.zIndex = -1;
+                    source.crouching = false;
+                    source.disabled = true;
+                    source.collision = false;
+                    source.gravity_multiplier = 0;
+                    if(data.collisionCode === 'warp') source.motion = { x:0, y:2, r:0 };
+                    else source.motion = { x:2, y:0, r:0 };
+
+                    setTimeout(() => {
+                        importLevel(world.level, world.level_data_type, world.sub==='sub'?'level':'sub');
+                    }, 250);
+                    break;
+                case 'conveyor':
+                    if(!source.grounded || dir !== 'u' || data.conveyor_speed === undefined) break;
+                    source.motion.x += data.conveyor_speed
                     break;
                 default:
                     break;
@@ -1186,6 +1218,14 @@ const tileDataset = {
 
         collision: true,
     }),
+    'cloud_tile': new tileData({
+        texture: anim.cloud_tile,
+        collision: true,
+    }),
+    'cloud_sad': new tileData({
+        texture: anim.cloud_sad,
+        collision: true,
+    }),
     'coin': new tileData({
         texture: anim.coin,
         animated: 0.07,
@@ -1225,30 +1265,105 @@ const tileDataset = {
         collision: { u: true, },
     }),
 
+    'conveyor_l': new tileData({
+        texture: anim.missing,
+
+        collision: true,
+        collisionCode: 'conveyor',
+        conveyor_speed: -0.03,
+    }),
+    'conveyor_r': new tileData({
+        texture: anim.missing,
+
+        collision: true,
+        collisionCode: 'conveyor',
+        conveyor_speed: 0.03,
+    }),
+    'fast_conveyor_l': new tileData({
+        texture: anim.missing,
+
+        collision: true,
+        collisionCode: 'conveyor',
+        conveyor_speed: -0.06,
+    }),
+    'fast_conveyor_r': new tileData({
+        texture: anim.missing,
+
+        collision: true,
+        collisionCode: 'conveyor',
+        conveyor_speed: 0.06,
+    }),
+
+    'warp': new tileData({
+        texture: anim.none,
+
+        collision: false,
+        collisionCode: 'warp',
+    }),
+    'warp_right': new tileData({
+        texture: anim.none,
+
+        collision: false,
+        collisionCode: 'warp_right',
+    }),
+
     'pipe_top_l': new tileData({
-        // type: 'question',
         texture: anim.pipe_top_l,
         animated: false,
 
         collision: true,
     }),
     'pipe_top_r': new tileData({
-        // type: 'question',
         texture: anim.pipe_top_r,
         animated: false,
 
         collision: true,
     }),
     'pipe_l': new tileData({
-        // type: 'question',
         texture: anim.pipe_l,
         animated: false,
 
         collision: true,
     }),
     'pipe_r': new tileData({
-        // type: 'question',
         texture: anim.pipe_r,
+        animated: false,
+
+        collision: true,
+    }),
+    // Horizontal pipe
+    'pipe_hor_b': new tileData({
+        texture: anim.pipe_hor_b,
+        animated: false,
+
+        collision: true,
+    }),
+    'pipe_hor_t': new tileData({
+        texture: anim.pipe_hor_t,
+        animated: false,
+
+        collision: true,
+    }),
+    'pipe_hor_end_b': new tileData({
+        texture: anim.pipe_hor_end_b,
+        animated: false,
+
+        collision: true,
+    }),
+    'pipe_hor_end_t': new tileData({
+        texture: anim.pipe_hor_end_t,
+        animated: false,
+
+        collision: true,
+    }),
+    'pipe_inter_b': new tileData({
+        texture: anim.pipe_inter_b,
+        animated: false,
+
+        collision: true,
+    }),
+    'pipe_inter_t': new tileData({
+        texture: anim.pipe_inter_t,
         animated: false,
 
         collision: true,
@@ -1287,6 +1402,26 @@ const tileDataset = {
         // collision: { r: true, d: true,},
         collision: false,
         slope: [0, 48],
+    }),
+
+
+
+    // Underground
+    'ug_ground': new tileData({
+        texture: anim.ug_ground,
+        collision: true,
+    }),
+    'ug_hard': new tileData({
+        texture: anim.ug_hard,
+        collision: true,
+    }),
+    'ug_brick': new tileData({
+        texture: anim.ug_brick,
+
+        collision: true,
+        collisionCode: 'brick',
+
+        container: true,
     }),
 }
 
@@ -1450,16 +1585,29 @@ const powers = {
     },
     'cloud': {
         action: object => {
-            // if(object.projectiles >= 2) return;
-            // if(object.projectiles < 0) object.projectiles = 0; // bandaid fix for projectile count randomly going well into the negative and allowing spam
+            if(object.projectiles >= 3) return;
             // object.power_anim = 15;
-            // Turn around
+
+            object.projectiles++;
             
             object.motion.y = -3;
             let [dl, under, dr] = [object.adj.downleft, object.adj.under, object.adj.downright];
-            if(dl.type == '_') dl?.data?.set(dl, 'ground');
-            if(under.type == '_') under?.data?.set(under, 'ground');
-            if(dr.type == '_') dr?.data?.set(dr, 'ground');
+            cloudPlacement();
+
+            // Despawn
+            setTimeout(() => {
+                cloudPlacement('cloud_tile', 'cloud_sad');
+                setTimeout(() => {
+                    cloudPlacement('cloud_sad', '_');
+                    if(object.projectiles > 0) object.projectiles--;
+                }, 2000);
+            }, 2500);
+
+            function cloudPlacement(replace='_', place='cloud_tile') {
+                if(dl.type === replace) dl?.data?.set(dl, place);
+                if(under.type === replace) under?.data?.set(under, place);
+                if(dr.type === replace) dr?.data?.set(dr, place);
+            }
             
             // object.projectiles++;
         },

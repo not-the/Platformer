@@ -36,7 +36,7 @@
                         </tr>
                     </table>
 
-                    <input type="button" value="Create level" onclick="importLevel(false, undefined, true)" class="fullwidth">
+                    <input type="button" value="Create level" onclick="importLevel(false, undefined, undefined, true)" class="fullwidth">
                 </div>
 
                 <!-- Export -->
@@ -69,12 +69,13 @@
                 <!-- Config -->
                 <div class="pane" id="config">
                     <h2>Level Config</h2>
+                    <p class="alt_text">Editor mode must be enabled to change these settings (Press Q)</p><br/>
                     <table>
                         <tr>
                             <td>Resize (width)</td>
                             <td>
                                 <input type="button" value="-" onclick="resizeLevel(-1)">
-                                <input type="number" name="current_level_width" id="current_level_width" value="0" style="width: 64px" disabled>
+                                <input type="number" name="current_level_width" id="current_level_width" value="0" style="width: 96px" disabled>
                                 <input type="button" value="+" onclick="resizeLevel(1)">
                             </td>
                         </tr>
@@ -82,7 +83,7 @@
                             <td>Resize (height)</td>
                             <td>
                                 <input type="button" value="-" onclick="resizeLevel(-1, 'y')">
-                                <input type="number" name="current_level_height" id="current_level_height" value="0" style="width: 64px" disabled>
+                                <input type="number" name="current_level_height" id="current_level_height" value="0" style="width: 96px" disabled>
                                 <input type="button" value="+" onclick="resizeLevel(1, 'y')">
                                 <br/><br/>
                             </td>
@@ -105,7 +106,6 @@
                         </tr>
                     </table>
 
-                    <br/><br/>
                     <input type="button" value="Done" onclick="htmlMenu('creation', false)" class="fullwidth">
                 </div>
 
@@ -199,6 +199,13 @@
         <!-- Tools -->
         <div id="tools" class="html_menu">
             <div class="container">
+                <!-- Tabs -->
+                <div class="flex tabs" style="margin: 0 auto; transform: none; position: unset; width: 560px;">
+                    <a href="#" role="button" style="color: var(--text); font-weight: bolder;" class="fullwidth" onclick="htmlMenu('tools', false)">
+                        Close (Esc)
+                    </a>
+                </div>
+
                 <h2>Tiles</h2>
                 <img src="./assets/ui/eraser.png" alt="Eraser" role="button" data-value="tile/_" onclick="setEditorTool()" title="Eraser" class="selection">
                 <img src="./assets/tile/ground.png" alt="ground" role="button" data-value="tile/ground" onclick="setEditorTool()">
@@ -207,6 +214,7 @@
                 <img src="./assets/tile/question.png" alt="question" role="button" data-value="tile/question" onclick="setEditorTool()">
                 <img src="./assets/ui/invis.png" alt="question" role="button" data-value="tile/invis_question" onclick="setEditorTool()">
                 <img src="./assets/tile/used.png" alt="question" role="button" data-value="tile/used" onclick="setEditorTool()">
+                <img src="./assets/tile/cloud_tile.png" alt="question" role="button" data-value="tile/cloud_tile" onclick="setEditorTool()">
                 <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/coin" onclick="setEditorTool()">
                 <img src="./assets/tile/coin1.png" alt="question" role="button" data-value="tile/multi_coin" onclick="setEditorTool()">
                 <img src="./assets/tile/spikes.png" alt="question" role="button" data-value="tile/spikes" onclick="setEditorTool()">
@@ -222,7 +230,16 @@
 
                 <img src="./assets/tile/slope/ground_slope_l.png" alt="ground" role="button" data-value="tile/ground_slope_l" onclick="setEditorTool()">
                 <img src="./assets/tile/slope/ground_slope_r.png" alt="ground" role="button" data-value="tile/ground_slope_r" onclick="setEditorTool()">
+                <img src="./assets/missing.png" alt="conveyor_l" role="button" data-value="tile/conveyor_l" onclick="setEditorTool()">
+                <img src="./assets/missing.png" alt="conveyor_r" role="button" data-value="tile/conveyor_r" onclick="setEditorTool()">
+                <img src="./assets/missing.png" alt="fast_conveyor_l" role="button" data-value="tile/fast_conveyor_l" onclick="setEditorTool()">
+                <img src="./assets/missing.png" alt="fast_conveyor_r" role="button" data-value="tile/fast_conveyor_r" onclick="setEditorTool()">
                 <br/>
+
+                <h2>Tiles (Underground)</h2>
+                <img src="./assets/tile/underground/ground.png" alt="ground" role="button" data-value="tile/ug_ground" onclick="setEditorTool()">
+                <img src="./assets/tile/underground/hard.png" alt="hard" role="button" data-value="tile/ug_hard" onclick="setEditorTool()">
+                <img src="./assets/tile/underground/brick.png" alt="brick" role="button" data-value="tile/ug_brick" onclick="setEditorTool()">
 
                 <h2>Decoration</h2>
                 <img src="./assets/decoration/bush.png" alt="bush" role="button" data-value="tile/bush" onclick="setEditorTool()">
@@ -236,8 +253,9 @@
                 <br/>
 
                 <h2>Objects</h2>
-                <img src="./assets/player1/player.png" alt="" role="button" data-value="object/mario" onclick="setEditorTool()">
-                <img src="./assets/player2/player.png" alt="" role="button" data-value="object/luigi" onclick="setEditorTool()">
+                <img src="./assets/player1/still.png" alt="" role="button" data-value="object/mario" onclick="setEditorTool()">
+                <img src="./assets/player2/still.png" alt="" role="button" data-value="object/luigi" onclick="setEditorTool()">
+                <img src="./assets/smb3/player1/still.png" alt="" role="button" data-value="object/smb3_mario" onclick="setEditorTool()">
                 <img src="./assets/mega/still.png" alt="" role="button" data-value="object/megaman" onclick="setEditorTool()">
                 <img src="./assets/entity/mount/still.png" alt="" role="button" data-value="object/mount" onclick="setEditorTool()">
                 <img src="./assets/enemy/goomba.png" alt="" role="button" data-value="object/goomba" onclick="setEditorTool()">
@@ -270,6 +288,7 @@
                     <option value="tile/question">question</option>
                     <option value="tile/invis_question">invis_question</option>
                     <option value="tile/used">used</option>
+                    <option value="tile/cloud_tile">cloud_tile</option>
                     <option value="tile/coin">coin</option>
                     <option value="tile/multi_coin">multi_coin</option>
                     <option value="tile/bush">bush</option>
@@ -285,11 +304,31 @@
                     <option value="tile/pole">pole</option>
                     <option value="tile/pole_top">pole_top</option>
 
+                    <option disabled>--- Tiles (Underground) --- </option>
+                    <option value="tile/ug_ground">ug_ground</option>
+                    <option value="tile/ug_hard">ug_hard</option>
+                    <option value="tile/ug_brick">ug_brick</option>
+
+
+                    <option disabled>--- Special Tiles ---</option>
+                    <option value="tile/conveyor_l">conveyor_l</option>
+                    <option value="tile/conveyor_r">conveyor_r</option>
+                    <option value="tile/fast_conveyor_l">fast_conveyor_l</option>
+                    <option value="tile/fast_conveyor_r">fast_conveyor_r</option>
+
                     <option disabled>--- Pipe ---</option>
                     <option value="tile/pipe_top_l">pipe_top_l</option>
                     <option value="tile/pipe_top_r">pipe_top_r</option>
                     <option value="tile/pipe_l">pipe_l</option>
                     <option value="tile/pipe_r">pipe_r</option>
+                    <option value="tile/pipe_hor_b">pipe_hor_b</option>
+                    <option value="tile/pipe_hor_t">pipe_hor_t</option>
+                    <option value="tile/pipe_hor_end_b">pipe_hor_end_b</option>
+                    <option value="tile/pipe_hor_end_t">pipe_hor_end_t</option>
+                    <option value="tile/pipe_inter_b">pipe_inter_b</option>
+                    <option value="tile/pipe_inter_t">pipe_inter_t</option>
+                    <option value="tile/warp">warp</option>
+                    <option value="tile/warp_right">warp_right</option>
                     <option value="structure/pipe">PIPE</option>
                     <option value="structure/pipe_neck">PIPE_NECK</option>
 
@@ -311,6 +350,7 @@
                     <option disabled>--- OBJECTS ---</option>
                     <option value="object/mario">mario</option>
                     <option value="object/luigi">luigi</option>
+                    <option value="object/smb3_mario">smb3_mario</option>
                     <option value="object/megaman">megaman</option>
                     <option value="object/mount">mount</option>
                     <option value="object/goomba">goomba</option>
@@ -330,13 +370,6 @@
                     <option value="object/lemon">lemon</option>
                     <option value="object/particle">particle</option>
                 </select>
-
-                <!-- Tabs -->
-                <div class="flex tabs">
-                    <a href="#" role="button" style="color: var(--text); font-weight: bolder; padding-right: 6px; width: 560px;;" class="fullwidth" onclick="htmlMenu('tools', false)">
-                        Close (Esc)
-                    </a>
-                </div>
             </div>
         </div>
     </div>

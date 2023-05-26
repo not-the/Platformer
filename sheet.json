@@ -1,7 +1,10 @@
 {
     "textures": {
+        "missing": "missing",
+
         "title": "ui/title",
         "overlay": "ui/overlay",
+        "screen_black": "ui/screen_black",
         "hamburger": "ui/hamburger",
         "pause": "ui/pause",
         "gear": "ui/gear",
@@ -178,6 +181,8 @@
         "question3": "tile/question3",
         "invis": "ui/invis",
         "used": "tile/used",
+        "cloud_tile": "tile/cloud_tile",
+        "cloud_sad": "tile/cloud_sad",
         "coin1": "tile/coin1",
         "coin2": "tile/coin2",
         "coin3": "tile/coin3",
@@ -191,6 +196,12 @@
         "pipe_top_r": "tile/pipe_top_r",
         "pipe_l": "tile/pipe_l",
         "pipe_r": "tile/pipe_r",
+        "pipe_hor_b": "tile/pipe_horizontal_bottom",
+        "pipe_hor_t": "tile/pipe_horizontal_top",
+        "pipe_hor_end_b": "tile/pipe_horizontal_bottom_end",
+        "pipe_hor_end_t": "tile/pipe_horizontal_top_end",
+        "pipe_inter_b": "tile/pipe_intersect_bottom_l",
+        "pipe_inter_t": "tile/pipe_intersect_top_l",
     
         "black": "decoration/black",
         "bg_brick": "decoration/bg_brick",
@@ -213,6 +224,14 @@
         "cloud_large": "decoration/cloud_large",
         "hill": "decoration/hill",
         "hill_large": "decoration/hill_large",
+
+        "// Tiles (Underground)": 0,
+        "ug_ground": "tile/underground/ground",
+        "ug_hard": "tile/underground/hard",
+        "ug_brick": "tile/underground/brick",
+
+
+
     
         "// Entities": 0,
         "mount_still":  "entity/mount/still",

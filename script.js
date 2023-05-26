@@ -39,7 +39,7 @@ function join(method='keyboard', gamepad_index) {
         <figcaption>${playerID}</figcaption>
     </div>
     <input type="button" value="Identify" onclick="gamepadVibrate(${gamepad_index})"${method === 'gamepad' ? '' : ' disabled'}>
-    <img src="./assets/player${playerID}/player.png" alt="" class="character">`;
+    <img src="./assets/player${playerID}/still.png" alt="" class="character">`;
 
     // Reset
     playerID++;
@@ -439,7 +439,7 @@ class physicsObject {
             // Left
             if(left || right) allowXMotion = false;
             if(left) this.s.x = (app.stage.x*-1)+24;
-            if(right) this.s.x = (app.stage.x*-1) + app.stage.width - 24;
+            if(right) this.s.x = (app.stage.x*-1) + app.stage.width - 25;
         }
 
         // Left wall
@@ -891,12 +891,29 @@ class physicsObject {
             updateHud();
             console.log(`${this.lives} lives remaining`);
 
-            // Reset
+            // Determine if singleplayer or not
+            let player_count = 0;
+            let last_player;
+            for(let [key, value] of Object.entries(physicsObjects)) {
+                if(value.player !== false) player_count++;
+                last_player = value;
+            }
+        
+            // Reset (singleplayer)
+            // if(player_count <= 1) {
+            //     buildMenu('dead');
+            //     setTimeout(() => { restartLevel() }, 1000);
+            //     return;
+            // }
+            if(player_count <= 1) return restartLevel();
+
+            // Reset (multiplayer)
             this.dead = false;
             this.animate_by_state = true;
             this.collision = true;
             [this.motion.x, this.motion.y] = [0, 0];
-            [this.s.x, this.s.y] = convertCoord(...world.spawn_temporary);
+            [this.s.x, this.s.y] = [last_player.s.x, last_player.s.y-96];
+            // [this.s.x, this.s.y] = convertCoord(...[3, 6]);
         }, 3000);
     }
 
@@ -954,7 +971,7 @@ class physicsObject {
     /** Despawn */
     despawn() {
         if(this.rider) this.rider.unride();
-        if(this.owner) this.owner.projectiles--;
+        if(this.owner && this.owner.projectiles > 0) this.owner.projectiles--;
         deleteSprite(this.s);
         delete physicsObjects[this.id];
     }
@@ -1050,14 +1067,16 @@ function reset() {
 
     stage = [];
     physicsObjects = {};
+    objID = 0;
     animatingTiles = [];
 }
 
 /** Import level */
-function importLevel(data=false, type='url', editor=false) {
+function importLevel(data=false, type='url', sub='level', editor=false) {
     world.editing = false;
     world.level = data;
     world.level_data_type = 'url';
+    world.sub = sub;
 
     // Import from local file
     if(type === 'upload') {
@@ -1099,17 +1118,19 @@ function importLevel(data=false, type='url', editor=false) {
     }
 
     // Close menu
-    toggleMenu(false);
     htmlMenu('creation', false);
     updateLevelOptions();
     panCamera();
     resetHud();
-
     if(editor) prepEditor();
-    else pause(false);
+    else {
+        pause(false);
+        toggleMenu(false);
+    }
 
     function generate(imported) {
-        const level = imported.level;
+        if(sub !== 'level') imported = imported[sub]; // Sub-level
+        const level = imported['level'];
         app.renderer.background.color = imported.bg === undefined ? 0x9290ff : imported.bg; // BG color
 
         // Stage
@@ -1129,11 +1150,17 @@ function importLevel(data=false, type='url', editor=false) {
         }
 
         // Update
-        world.scroll_behavior = 'normal' || imported?.config?.scroll_behavior;
+        world.scroll_behavior = imported?.config?.scroll_behavior || 'normal';
         config_scroll_behavior.value = world.scroll_behavior; // Update edit page
+        config_bg_color.value = imported.bg;
     }
 }
 importLevel(world.level);
+
+/** Restart level */
+function restartLevel() {
+    importLevel(world.level, world.level_data_type, world.sub);
+}
 
 /** Resizes the current level */
 function resizeLevel(dir, axis='x') {
@@ -1187,9 +1214,11 @@ function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
     if(name === 'flag') world.flag = o;
 
     // Interactable
-    o.s.eventMode = 'static'; // 'none'/'passive'/'auto'/'static'/'dynamic'
-    o.s.buttonMode = true;
-    o.s.on('pointerdown', click);
+    if(!data.ghost) {
+        o.s.eventMode = 'static'; // 'none'/'passive'/'auto'/'static'/'dynamic'
+        o.s.buttonMode = true;
+        o.s.on('pointerdown', click);
+    }
     return o;
 
     /** Editor */
@@ -1318,28 +1347,14 @@ function destroyMenu() {
 
 /** Escape key */
 function menuKey() {
-    if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
+    if(!gamespace.classList.contains('hide_tools')) htmlMenu('tools', false);
     else if(!gamespace.classList.contains('hide_players')) htmlMenu('players', false);
-    else if(!gamespace.classList.contains('hide_tools')) htmlMenu('tools', false);
+    else if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
     else if(world.menu === 'editor') buildMenu('main'); // htmlMenu('tools', true);
     else {
         // Pause game & open menu
         toggleMenu(!world.paused);
         pause();
-
-        for(spr of app.stage.children) {
-            // Stop animations
-            if(spr.stop != undefined) playPauseSprite(spr);
-    
-            // Editor preview
-            if(world.paused && world.editing) {
-                try {
-                    if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true}); /** Make container contents visible */
-                    if(spr?.type == 'invis_question') spawn('particle', spr?.x, spr?.y, {texture:'invis_question', ghost:true}); /** Make invisible question blocks visible */
-                }
-                catch (error) { console.warn(error); }
-            }
-        }
     }
 }
 
@@ -1366,6 +1381,21 @@ function htmlMenu(id='creation', state=true, pane='create') {
 function prepEditor() {
     pause(true);
     buildMenu('editor');
+
+    
+    for(spr of app.stage.children) {
+        // Stop animations
+        if(spr.stop != undefined) playPauseSprite(spr);
+
+        // Editor preview
+        if(world.paused && world.editing) {
+            try {
+                if(spr?.contains !== undefined) spawn('particle', spr?.x, spr?.y, {texture:spr?.contains, ghost:true}); /** Make container contents visible */
+                if(spr?.type == 'invis_question') spawn('particle', spr?.x, spr?.y, {texture:'invis_question', ghost:true}); /** Make invisible question blocks visible */
+            }
+            catch (error) { console.warn(error); }
+        }
+    }
 }
 
 
@@ -1392,10 +1422,12 @@ function gameTick(delta, repeat=false) {
     // Editor
     if(world.editing && world.paused) {
         let dis = pressed['shift'] ? 10 : 4;
-        if(pressed['arrowright'] || pressed['d']) panCamera(app.stage.x - dis);
-        if(pressed['arrowleft'] || pressed['a']) panCamera(app.stage.x + dis);
-        if(pressed['arrowup'] || pressed['w']) panCamera(undefined, app.stage.y + dis);
-        if(pressed['arrowdown'] || pressed['s']) panCamera(undefined, app.stage.y - dis);
+        if(pressed['arrowright'] || pressed['d'])   panCamera(app.stage.x - dis,    app.stage.y);
+        if(pressed['arrowleft'] || pressed['a'])    panCamera(app.stage.x + dis,    app.stage.y);
+        // if(pressed['arrowup'] || pressed['w'])      panCamera(app.stage.x,          app.stage.y + dis);
+        // if(pressed['arrowdown'] || pressed['s'])    panCamera(app.stage.x,          app.stage.y - dis);
+        if(pressed['arrowup'] || pressed['w']) app.stage.y += dis;
+        if(pressed['arrowdown'] || pressed['s']) app.stage.y -= dis;
     }
 
     // Physics
@@ -1428,7 +1460,7 @@ function gameTick(delta, repeat=false) {
     }
 
     // Camera panning
-    panCamera();
+    world.scroll_behavior === 'autoscroll' ? panCamera(app.stage.x-1, app.stage.y-1) : panCamera();
 
     // Animated tiles
     for(i in animatingTiles) {       
@@ -1571,12 +1603,13 @@ function panCamera(x, y) {
     let posX = [];
     let posY = [];
     for(let [key, obj] of Object.entries(physicsObjects)) if(obj.player && !obj.dead) { posX.push(obj.s.x); posY.push(obj.s.y); }
-    posX = Math.round(average(posX));
-    posY = Math.round(average(posY));
+    posX = Math.round(average(posX)) || 0;
+    posY = Math.round(average(posY)) || 0;
     const sleft = (posX < (app.view.width * 2/5) - app.stage.x);
     const sright = (posX > (app.view.width * 3/5) - app.stage.x);
+    const exception = (x !== undefined || world.scroll_behavior === 'autoscroll');
     if(
-        ( sleft || sright )
+        ( sleft || sright ) || exception
     ) {
         // Limit calculation
         let sectionX = sleft ? 2/5 : 3/5;
@@ -1616,7 +1649,7 @@ function panCamera(x, y) {
     const stop = (posY > (app.view.height * 0.3) - app.stage.y);
     const sbottom = (posY < (app.view.height * 0.7) - app.stage.y);
     if(
-        (stop || sbottom)
+        (stop || sbottom) || exception
     ) {
         let sectionY = stop ? 0.7 : 0.3;
         posY = (posY * -1) + app.view.height * sectionY; // Automatic
@@ -1718,7 +1751,6 @@ config_scroll_behavior.addEventListener('change', event => {
     world.scroll_behavior = event.srcElement.value;
 })
 config_bg_color.addEventListener('input', event => {
-    console.log(config_bg_color.value);
     app.renderer.background.color = config_bg_color.value;
 })
 
