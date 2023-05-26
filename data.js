@@ -274,7 +274,7 @@ const menus = {
             x: 128,
             y: -24,
             click: () => {
-                htmlMenu('creation', true, 'edit');
+                htmlMenu('creation', true, 'config');
             }
         },
         {
@@ -323,6 +323,7 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: false,
+        turns_midair: true,
 
         x: 0,
         y: 0,
@@ -370,6 +371,7 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: true,
+        turns_midair: false,
     
         // x: 3,
         // y: 11,
@@ -398,6 +400,7 @@ const objectTemplate = {
         collision: true,
         friction: true,
         animate_by_state: true,
+        turns_midair: false,
     
         x: 3,
         y: 11,
@@ -917,7 +920,64 @@ const objectTemplate = {
         gravity_multiplier: 0,
     },
 
-    data: { texture: 'flag', friction: false, gravity_multiplier: 0, }
+
+
+    // Mario 3
+    'smb3_mario': {
+        texture: 'smb3_mario_small_still',
+    
+        type: 'smb3_mario',
+        player: 1,
+        // enemy: false,
+        deal_damage: 'player',
+        immune: ['player', 'under'],
+        interacts: ['b'],
+        powers_up: true,
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+        animate_by_state: true,
+    
+        accel_x: 0.085,
+        air_accel: 0.085,
+        walk: 2.5,
+        run: 5,
+        jump_accel: 6.4,
+        jump_accel_super: 7,
+    },
+
+
+
+    // My game
+    'dude': {
+        texture: 'dude_small_still',
+    
+        type: 'dude',
+        player: 1,
+        // enemy: false,
+        deal_damage: 'player',
+        immune: ['player', 'under'],
+        interacts: ['b'],
+        powers_up: false,
+
+        doMotion: true,
+        collision: true,
+        friction: true,
+        animate_by_state: true,
+    
+        // x: 3,
+        // y: 11,
+    
+        accel_x: 0.085,
+        air_accel: 0.085,
+        walk: 2.5,
+        run: 5,
+        jump_accel: 6.4,
+        jump_accel_super: 7,
+        // traction: 1,
+        // air_traction: 1,
+    },
 }
 
 class tileData {
@@ -1003,6 +1063,7 @@ class tileData {
                 case 'coin':
                     collectCoin();
                     this.set(tile, '_');
+                    break;
                 case 'flagpole':
                     if(source.player == false || source.disabled) break;
                     console.log(dir);
@@ -1011,7 +1072,7 @@ class tileData {
                     source.gravity_multiplier = 0;
                     source.s.x -= (source.s.x % 48) - 48;
                     source.facing = dir==='l'?1:-1;
-                    source.s.textures = anim[`${source.type}_${source.form}_climb1`];
+                    setAnimation(source.s, `${source.type}_${source.form}_climb1`);
 
                     // Lower flag
                     setTimeout(() => {
@@ -1024,6 +1085,10 @@ class tileData {
                             source.player = false;
                             source.ai_info = {auto_walk:true};
                             source.gravity_multiplier = 1;
+                            setTimeout(() => {
+                                pause(true);
+                                buildMenu('main');
+                            }, 3000);
                         }, 1000);
                     }, 1000);
                     break;
@@ -1158,7 +1223,6 @@ const tileDataset = {
         texture: anim.pole_top,
 
         collision: { u: true, },
-        collisionCode: 'flagpole',
     }),
 
     'pipe_top_l': new tileData({

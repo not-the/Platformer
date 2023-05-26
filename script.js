@@ -519,45 +519,36 @@ class physicsObject {
         
         /* ----- Animate ----- */
         // Override
-        if(this.sprite_override) {
-            this.s.textures = anim[this.sprite_override];
-        }
+        if(this.sprite_override) setAnimation(this.s, this.sprite_override);
         // Using power
         else if(this.power_anim > 0) {
-            if(this.form === 'fire') this.s.textures = anim[`${this.type}_${this.form}_throw`];
+            setAnimation(this.s, `${this.type}_${this.form}_throw`);
             this.power_anim--;
         }
 
 
         // Crouch
-        else if(this.crouching) {
-            this.s.textures = anim[`${this.type}_${this.form}_crouch`];
-        }
+        else if(this.crouching) setAnimation(this.s, `${this.type}_${this.form}_crouch`);
         // Jump
         else if(!this.grounded) {
-            if(!this.jump_ready) this.s.textures = anim[`${this.type}_${this.form}_jump`];
-            else this.s.textures = anim[`${this.type}_${this.form}_fall`];
+            if(!this.jump_ready) setAnimation(this.s, `${this.type}_${this.form}_jump`);
+            else setAnimation(this.s, `${this.type}_${this.form}_fall`);
         }
         // Turn
         else if(
             this.controls.right && Math.sign(this.motion.x) == -1
             || this.controls.left && Math.sign(this.motion.x) == 1
         ) {
-            this.s.textures = anim[`${this.type}_${this.form}_turn`];
+           setAnimation(this.s, `${this.type}_${this.form}_turn`);
         }
         // Run
         else if(this.controls.right || this.controls.left) {
-            if(this.s.textures != anim[`${this.type}_${this.form}_run`]) {
-                this.s.textures = anim[`${this.type}_${this.form}_run`];
-                playPauseSprite(this.s);
-            }
+            setAnimation(this.s, `${this.type}_${this.form}_run`);
             if(this.controls.run) this.s.animationSpeed = 0.24;
             else this.s.animationSpeed = 0.16;
         }
         // Still
-        else {
-            this.s.textures = anim[`${this.type}_${this.form}_still`];
-        }
+        else setAnimation(this.s, `${this.type}_${this.form}_still`);
 
         // Filters
         if(this.star_mode && this.s.filters?.length === 0) this.s.filters = [filters.rainbow];
@@ -645,12 +636,12 @@ class physicsObject {
         // Right
         if(this.controls.right) {
             if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
-            if(this.grounded || this.form == 'parkour') this.facing = 1;
+            if(this.grounded || this.form == 'parkour' || this.turns_midair) this.facing = 1;
         };
         // Left
         if(this.controls.left) {
             if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration;
-            if(this.grounded || this.form == 'parkour') this.facing = -1;
+            if(this.grounded || this.form == 'parkour' || this.turns_midair) this.facing = -1;
         };
         // Action
         if(this.controls.action) {
@@ -1330,7 +1321,7 @@ function menuKey() {
     if(!gamespace.classList.contains('hide_creation')) htmlMenu('creation', false);
     else if(!gamespace.classList.contains('hide_players')) htmlMenu('players', false);
     else if(!gamespace.classList.contains('hide_tools')) htmlMenu('tools', false);
-    else if(world.menu === 'editor') htmlMenu('tools', true); // buildMenu('main') 
+    else if(world.menu === 'editor') buildMenu('main'); // htmlMenu('tools', true);
     else {
         // Pause game & open menu
         toggleMenu(!world.paused);
@@ -1726,6 +1717,10 @@ config_scroll_behavior.addEventListener('change', event => {
     if(!world.editing) return event.srcElement.value = world.scroll_behavior;
     world.scroll_behavior = event.srcElement.value;
 })
+config_bg_color.addEventListener('input', event => {
+    console.log(config_bg_color.value);
+    app.renderer.background.color = config_bg_color.value;
+})
 
 // Debug
 document.querySelector('canvas').addEventListener('wheel', event => {
@@ -1749,7 +1744,7 @@ document.querySelectorAll('.setting').forEach(element => {
 // Hash changes
 addEventListener("hashchange", event => {
     document.querySelectorAll('.tabs > a').forEach(element => { element.classList.remove('selection'); });
-    document.querySelector(`*[href="${document.location.hash}"`).classList.add('selection');
+    document.querySelector(`*[href="${document.location.hash}"`)?.classList?.add('selection');
 });
 if(location.hash === "#dev") toggleMenu(0); // Skip main menu if in dev mode
 
@@ -1760,7 +1755,6 @@ window.onblur = () => { pressed = {}; }
 setting('controls', (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)));
 
 
-console.log(history);
 // beforeunload
 // window.onbeforeunload = event => {
 //     alert("Unsaved changes will be lost"); //Gecko + Webkit, Safari, Chrome etc.

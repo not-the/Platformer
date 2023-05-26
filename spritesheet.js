@@ -2,8 +2,9 @@
 const body = document.querySelector('body');
 const gamespace = document.getElementById('game');
 const drawSel = document.getElementById('drawtile');
-const config_scroll_behavior = document.getElementById('config_scroll_behavior');
 const importInput = document.getElementById("import_level");
+const config_scroll_behavior = document.getElementById('config_scroll_behavior');
+const config_bg_color = document.getElementById("config_bg_color");
 
 // PIXI.js Setup
 let app = new PIXI.Application({ width: 1200, height: 672 });
@@ -11,9 +12,6 @@ app.renderer.background.color = 0x9290ff;
 PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
 app.stage.y += 48;
 document.getElementById('game').appendChild(app.view);
-
-// Layers
-// var layer = new PIXI.display.Layer();
 
 /** Image filters */
 const filters = {
@@ -61,36 +59,39 @@ function spriteFix(sprite, anchors=true) {
     // sprite.filters = [filters.rainbow];
 }
 
+function setAnimation(s, name, speed=true) {
+    if(s.textures === anim[name]) return;
+    if(anim[name] !== undefined) s.textures = anim[name];
+    if(speed !== false) s.animationSpeed = 0.16;
+    playPauseSprite(s);
+}
+
 /** Play/pause a sprite depending on if the game is running */
 function playPauseSprite(spr) {
     world.paused ? spr.stop() : spr.play()
 }
 
-
+// Sprites
 const textures = {}
 const anim = {}
 
+/** importTextures */
 function importTextures() {
     const raw = get('./sheet.json', true);
     for(let [key, value] of Object.entries(raw.textures)) {
         if(value === 0) continue; // Skip comments
         let url = `./assets/${value}.png`;
         let exists = false;
-
-        try { exists = imageExists(url); }
-        catch (error) { }
-
+        try { exists = imageExists(url); } catch (error) { }
         if(!exists) url = './assets/missing.png';
+
         textures[key] = PIXI.Texture.from(url);
         anim[key] = [textures[key]];
     }
     for(let [key, animation] of Object.entries(raw.animations)) {
         if(animation === 0) continue; // Skip comments
         let arr = [];
-        for(let frame of animation) {
-            arr.push(textures[frame]);
-        }
-        // console.log(arr);
+        for(let frame of animation) arr.push(textures[frame]);
         anim[key] = arr;
     }
 
@@ -105,9 +106,7 @@ function importTextures() {
         try {
             http.open('HEAD', image_url, false);
             http.send();
-        } catch (error) {
-            // console.warn(error);
-        }
+        } catch (error) {/* console.warn(error); */}
         return (http.status != 404);
     }
 }

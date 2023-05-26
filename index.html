@@ -27,7 +27,7 @@
                     <table>
                         <tr>
                             <td>Width</td>
-                            <td><input type="number" name="option_level_width" id="option_level_width" value="50" min="25" max="2000"></td>
+                            <td><input type="number" name="option_level_width" id="option_level_width" value="100" min="25" max="2000"></td>
                         </tr>
                         <tr>
                             <td>Height</td>
@@ -37,39 +37,6 @@
                     </table>
 
                     <input type="button" value="Create level" onclick="importLevel(false, undefined, true)" class="fullwidth">
-                </div>
-
-                <!-- Edit -->
-                <div class="pane" id="edit">
-                    <h2>Level Options</h2>
-                    <table>
-                        <tr>
-                            <td>Resize (width)</td>
-                            <td>
-                                <input type="button" value="-" onclick="resizeLevel(-1)">
-                                <input type="number" name="current_level_width" id="current_level_width" value="0" style="width: 64px" disabled>
-                                <input type="button" value="+" onclick="resizeLevel(1)">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Resize (height)</td>
-                            <td>
-                                <input type="button" value="-" onclick="resizeLevel(-1, 'y')">
-                                <input type="number" name="current_level_height" id="current_level_height" value="0" style="width: 64px" disabled>
-                                <input type="button" value="+" onclick="resizeLevel(1, 'y')">
-                            </td>
-                        </tr>
-                    </table>
-
-                    <label for="config_scroll_behavior">Scroll Behavior</label>
-                    <select name="config_scroll_behavior" id="config_scroll_behavior">
-                        <option value="normal" selected>Normal</option>
-                        <option value="no_left">Can't go left</option>
-                        <option value="autoscroll">Autoscroll</option>
-                    </select>
-
-                    <br/><br/>
-                    <input type="button" value="Done" onclick="htmlMenu('creation', false)" class="fullwidth">
                 </div>
 
                 <!-- Export -->
@@ -97,6 +64,49 @@
                     <input type="file" name="import_level" id="import_level">
                     <hr/>
                     <input type="button" value="Import" onclick="importLevel(false, 'upload')" class="fullwidth">
+                </div>
+
+                <!-- Config -->
+                <div class="pane" id="config">
+                    <h2>Level Config</h2>
+                    <table>
+                        <tr>
+                            <td>Resize (width)</td>
+                            <td>
+                                <input type="button" value="-" onclick="resizeLevel(-1)">
+                                <input type="number" name="current_level_width" id="current_level_width" value="0" style="width: 64px" disabled>
+                                <input type="button" value="+" onclick="resizeLevel(1)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Resize (height)</td>
+                            <td>
+                                <input type="button" value="-" onclick="resizeLevel(-1, 'y')">
+                                <input type="number" name="current_level_height" id="current_level_height" value="0" style="width: 64px" disabled>
+                                <input type="button" value="+" onclick="resizeLevel(1, 'y')">
+                                <br/><br/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label for="config_scroll_behavior">Scroll Behavior</label></td>
+                            <td>
+                                <select name="config_scroll_behavior" id="config_scroll_behavior">
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="no_left">Can't go left</option>
+                                    <option value="autoscroll">Autoscroll</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label for="config_bg_color">Background Color:</label></td>
+                            <td>
+                                <input type="color" name="config_bg_color" id="config_bg_color" value="Background color">
+                            </td>
+                        </tr>
+                    </table>
+
+                    <br/><br/>
+                    <input type="button" value="Done" onclick="htmlMenu('creation', false)" class="fullwidth">
                 </div>
 
                 <!-- Settings -->
@@ -131,9 +141,9 @@
             <!-- Tabs -->
             <div class="flex tabs">
                 <a href="#create" role="button" class="fullwidth">Create</a>
-                <a href="#edit" role="button" class="fullwidth">Edit</a>
                 <a href="#export" role="button" class="fullwidth">Export</a>
                 <a href="#import" role="button" class="fullwidth">Import</a>
+                <a href="#config" role="button" class="fullwidth">Config</a>
                 <a href="#settings" role="button" class="fullwidth">Settings</a>
                 <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="htmlMenu('creation', false)">
                     Close (Esc)
@@ -180,7 +190,7 @@
             </div>
             <!-- Tabs -->
             <div class="flex tabs">
-                <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="htmlMenu('players', false)">
+                <a href="#" role="button" style="color: var(--text); font-weight: bolder; padding-right: 6px;" class="fullwidth" onclick="htmlMenu('players', false)">
                     Close (Esc)
                 </a>
             </div>
@@ -323,7 +333,7 @@
 
                 <!-- Tabs -->
                 <div class="flex tabs">
-                    <a href="#" role="button" style="margin-left: 12px; color: var(--text); font-weight: bolder; padding-right: 6px; width: 560px;" class="fullwidth" onclick="htmlMenu('tools', false)">
+                    <a href="#" role="button" style="color: var(--text); font-weight: bolder; padding-right: 6px; width: 560px;;" class="fullwidth" onclick="htmlMenu('tools', false)">
                         Close (Esc)
                     </a>
                 </div>

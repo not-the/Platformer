@@ -24,7 +24,7 @@
 
 
         "// Small Mario": 0,
-        "mario_small_still": "player1/player",
+        "mario_small_still": "player1/still",
         "mario_small_run1":  "player1/run1",
         "mario_small_run2":  "player1/run2",
         "mario_small_run3":  "player1/run3",
@@ -55,6 +55,8 @@
         "mario_fire_jump":  "player1/fire/jump",
         "mario_fire_turn":  "player1/fire/turn",
         "mario_fire_crouch": "player1/fire/crouch",
+        "mario_fire_climb1": "player1/fire/climb1",
+        "mario_fire_climb2": "player1/fire/climb2",
         "mario_fire_throw": "player1/fire/throw",
     
         "// Leaf mario": 0,
@@ -87,7 +89,7 @@
         "mario_parkour_climb2": "player1/parkour/climb2",
     
         "// Small luigi": 0,
-        "luigi_small_still": "player2/player",
+        "luigi_small_still": "player2/still",
         "luigi_small_run1":  "player2/run1",
         "luigi_small_run2":  "player2/run2",
         "luigi_small_run3":  "player2/run3",
@@ -263,7 +265,47 @@
     
         "fire_poof1": "particle/fire_poof1",
         "fire_poof2": "particle/fire_poof2",
-        "fire_poof3": "particle/fire_poof3"
+        "fire_poof3": "particle/fire_poof3",
+
+
+
+        "// SMB3 Small Mario": 0,
+        "smb3_mario_small_still": "smb3/player1/still",
+        "smb3_mario_small_run1":  "smb3/player1/run1",
+        "smb3_mario_small_run2":  "smb3/player1/run2",
+        "smb3_mario_small_run3":  "smb3/player1/run3",
+        "smb3_mario_small_jump":  "smb3/player1/jump",
+        "smb3_mario_small_turn":  "smb3/player1/turn",
+        "smb3_mario_small_crouch": "smb3/player1/crouch",
+        "smb3_mario_small_climb1": "smb3/player1/climb1",
+        "smb3_mario_small_climb2": "smb3/player1/climb2",
+        "smb3_mario_dead": "smb3/player1/dead",
+        "smb3_mario_medium": "smb3/player1/medium",
+    
+        "// SMB3 Big mario": 0,
+        "smb3_mario_big_still": "smb3/player1/big/still",
+        "smb3_mario_big_run1":  "smb3/player1/big/run1",
+        "smb3_mario_big_run2":  "smb3/player1/big/run2",
+        "smb3_mario_big_run3":  "smb3/player1/big/run3",
+        "smb3_mario_big_jump":  "smb3/player1/big/jump",
+        "smb3_mario_big_turn":  "smb3/player1/big/turn",
+        "smb3_mario_big_crouch": "smb3/player1/big/crouch",
+        "smb3_mario_big_climb1": "smb3/player1/big/climb1",
+        "smb3_mario_big_climb2": "smb3/player1/big/climb2",
+
+
+
+
+        "dude_small_0": "mine/player/0",
+        "dude_small_still": "mine/player/1",
+        "dude_small_2": "mine/player/2",
+        "dude_small_3": "mine/player/3",
+        "dude_small_crouch": "mine/player/crouch",
+        "dude_small_crouch1": "mine/player/crouch1",
+        "dude_small_crouch2": "mine/player/crouch2",
+        "dude_small_crouch3": "mine/player/crouch3",
+
+        "dude_ground": "mine/tile/ground"
     },
     "animations": {
         "button_large": ["button_large", "button_large_hover"],
@@ -315,6 +357,29 @@
         "fireball": ["fireball1", "fireball2", "fireball3", "fireball4"],
 
         "coin_collect": ["coin_collect1", "coin_collect2", "coin_collect3", "coin_collect4"],
-        "fire_poof": ["fire_poof1", "fire_poof2", "fire_poof3"]
+        "fire_poof": ["fire_poof1", "fire_poof2", "fire_poof3"],
+
+
+
+        "smb3_mario_small_run": ["smb3_mario_small_run1", "smb3_mario_small_run2", "smb3_mario_small_run3"],
+        "smb3_mario_small_fall": ["smb3_mario_small_run1"],
+        "smb3_mario_big_run": ["smb3_mario_big_run1", "smb3_mario_big_run2", "smb3_mario_big_run3"],
+        "smb3_mario_big_fall": ["smb3_mario_big_run1"],
+        "smb3_mario_fire_run": ["smb3_mario_fire_run1", "smb3_mario_fire_run2", "smb3_mario_fire_run3"],
+        "smb3_mario_fire_fall": ["smb3_mario_fire_run1"],
+        "smb3_mario_leaf_run": ["smb3_mario_leaf_run1", "smb3_mario_leaf_run2", "smb3_mario_leaf_run3"],
+        "smb3_mario_leaf_fall": ["smb3_mario_leaf_run1"],
+        "smb3_mario_cloud_run": ["smb3_mario_cloud_run1", "smb3_mario_cloud_run2", "smb3_mario_cloud_run3"],
+        "smb3_mario_cloud_fall": ["smb3_mario_cloud_run1"],
+        "smb3_mario_parkour_run": ["smb3_mario_parkour_run1", "smb3_mario_parkour_run2", "smb3_mario_parkour_run3"],
+        "smb3_mario_parkour_fall": ["smb3_mario_parkour_run1"],
+
+
+
+        "dude_small_run": ["dude_small_2", "dude_small_3", "dude_small_2", "dude_small_still", "dude_small_0"],
+        "dude_small_jump": ["dude_small_3"],
+        "dude_small_crouch": ["dude_small_crouch1", "dude_small_crouch2", "dude_small_crouch3", "dude_small_crouch"],
+        "dude_small_fall": ["dude_small_still"],
+        "dude_small_turn": ["dude_small_2"]
     }
 }

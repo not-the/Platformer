@@ -1,8 +1,16 @@
+v0.15   May 26, 2023
+- Option to change the stage background color
+- Fixed coins acting as flagpoles
+- Objects:
+    + SMB3 Mario
+
+
 v0.14   May 24, 2023
 - Moved tile/object toolbox to be an overlay in the game. Open by clicking the block button in the editor
 - "Q" can also be pressed to view the toolbox anywhere
 - Added "Scroll behavior" in stage config 
 - Added a "Can't go left" option
+- Flagpole behavior
 - Fixed editor objects staying highlighted after deselected
 - Fixed shells not bouncing off of walls
 
