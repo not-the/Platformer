@@ -131,7 +131,7 @@
                         <a href="https://github.com/not-the/mario-pixijs" style="text-decoration: none;" target="_blank" rel=“noreferrer”>
                             <button class="flex fullwidth">
                                 <img src="https://www.notkal.com/assets/icon/github.svg" alt="notkal.com" style="height: 32px; margin-right: 6px; filter: invert();">
-                                <p>Github</p>
+                                <p>Source Code (Github)</p>
                             </button>
                         </a>
 
@@ -279,97 +279,100 @@
 
                 <img src="./assets/particle/brick_break1.png" alt="" role="button" data-value="object/particle" onclick="setEditorTool()">
 
-                <br/><br/>Draw:
-                <select name="drawtile" id="drawtile" style="min-width: 240px">
-                    <option value="tile/_" selected>erase</option>
-                    <option value="tile/ground">ground</option>
-                    <option value="tile/hard">hard</option>
-                    <option value="tile/brick">brick</option>
-                    <option value="tile/question">question</option>
-                    <option value="tile/invis_question">invis_question</option>
-                    <option value="tile/used">used</option>
-                    <option value="tile/cloud_tile">cloud_tile</option>
-                    <option value="tile/coin">coin</option>
-                    <option value="tile/multi_coin">multi_coin</option>
-                    <option value="tile/bush">bush</option>
-                    <option value="tile/bush_med">bush_med</option>
-                    <option value="tile/bush_large">bush_large</option>
-                    <option value="tile/cloud">cloud</option>
-                    <option value="tile/cloud_med">cloud_med</option>
-                    <option value="tile/cloud_large">cloud_large</option>
-                    <option value="tile/hill">hill</option>
-                    <option value="tile/hill_large">hill_large</option>
-                    <option value="tile/spikes">spikes</option>
-                    <option value="tile/bridge">bridge</option>
-                    <option value="tile/pole">pole</option>
-                    <option value="tile/pole_top">pole_top</option>
-
-                    <option disabled>--- Tiles (Underground) --- </option>
-                    <option value="tile/ug_ground">ug_ground</option>
-                    <option value="tile/ug_hard">ug_hard</option>
-                    <option value="tile/ug_brick">ug_brick</option>
-
-
-                    <option disabled>--- Special Tiles ---</option>
-                    <option value="tile/conveyor_l">conveyor_l</option>
-                    <option value="tile/conveyor_r">conveyor_r</option>
-                    <option value="tile/fast_conveyor_l">fast_conveyor_l</option>
-                    <option value="tile/fast_conveyor_r">fast_conveyor_r</option>
-
-                    <option disabled>--- Pipe ---</option>
-                    <option value="tile/pipe_top_l">pipe_top_l</option>
-                    <option value="tile/pipe_top_r">pipe_top_r</option>
-                    <option value="tile/pipe_l">pipe_l</option>
-                    <option value="tile/pipe_r">pipe_r</option>
-                    <option value="tile/pipe_hor_b">pipe_hor_b</option>
-                    <option value="tile/pipe_hor_t">pipe_hor_t</option>
-                    <option value="tile/pipe_hor_end_b">pipe_hor_end_b</option>
-                    <option value="tile/pipe_hor_end_t">pipe_hor_end_t</option>
-                    <option value="tile/pipe_inter_b">pipe_inter_b</option>
-                    <option value="tile/pipe_inter_t">pipe_inter_t</option>
-                    <option value="tile/warp">warp</option>
-                    <option value="tile/warp_right">warp_right</option>
-                    <option value="structure/pipe">PIPE</option>
-                    <option value="structure/pipe_neck">PIPE_NECK</option>
-
-                    <option disabled>--- BG Bricks ---</option>
-                    <option value="tile/black">black</option>
-                    <option value="tile/bg_brick">bg_brick</option>
-                    <option value="tile/bg_brick_door">bg_brick_door</option>
-                    <option value="tile/bg_brick_mid">bg_brick_mid</option>
-                    <option value="tile/bg_brick_top">bg_brick_top</option>
-                    <option value="tile/brick_window_l">brick_window_l</option>
-                    <option value="tile/brick_window_r">brick_window_r</option>
-                    <option value="structure/castle">castle</option>
-                    <option value="structure/flagpole">flagpole</option>
-
-                    <option disabled>--- Slopes ---</option>
-                    <option value="tile/ground_slope_l">ground_slope_l</option>
-                    <option value="tile/ground_slope_r">ground_slope_r</option>
-
-                    <option disabled>--- OBJECTS ---</option>
-                    <option value="object/mario">mario</option>
-                    <option value="object/luigi">luigi</option>
-                    <option value="object/smb3_mario">smb3_mario</option>
-                    <option value="object/megaman">megaman</option>
-                    <option value="object/mount">mount</option>
-                    <option value="object/goomba">goomba</option>
-                    <option value="object/koopa">koopa</option>
-                    <option value="object/shell">shell</option>
-                    <option value="object/red_koopa">red_koopa</option>
-                    <option value="object/red_shell">red_shell</option>
-                    <option value="object/bill">bill</option>
-                    <option value="object/mushroom">mushroom</option>
-                    <option value="object/life">life</option>
-                    <option value="object/star">star</option>
-                    <option value="object/flower">flower</option>
-                    <!-- <option value="object/leaf">leaf</option> -->
-                    <option value="object/cloud">cloud</option>
-                    <option value="object/parkour">parkour</option>
-                    <option value="object/fireball">fireball</option>
-                    <option value="object/lemon">lemon</option>
-                    <option value="object/particle">particle</option>
-                </select>
+                <br/><br/>
+                <label for="drawtile" class="select_label">
+                    Draw:
+                    <select name="drawtile" id="drawtile" style="min-width: 240px" onkeydown="IgnoreAlpha(event)">
+                        <option value="tile/_" selected>erase</option>
+                        <option value="tile/ground">ground</option>
+                        <option value="tile/hard">hard</option>
+                        <option value="tile/brick">brick</option>
+                        <option value="tile/question">question</option>
+                        <option value="tile/invis_question">invis_question</option>
+                        <option value="tile/used">used</option>
+                        <option value="tile/cloud_tile">cloud_tile</option>
+                        <option value="tile/coin">coin</option>
+                        <option value="tile/multi_coin">multi_coin</option>
+                        <option value="tile/bush">bush</option>
+                        <option value="tile/bush_med">bush_med</option>
+                        <option value="tile/bush_large">bush_large</option>
+                        <option value="tile/cloud">cloud</option>
+                        <option value="tile/cloud_med">cloud_med</option>
+                        <option value="tile/cloud_large">cloud_large</option>
+                        <option value="tile/hill">hill</option>
+                        <option value="tile/hill_large">hill_large</option>
+                        <option value="tile/spikes">spikes</option>
+                        <option value="tile/bridge">bridge</option>
+                        <option value="tile/pole">pole</option>
+                        <option value="tile/pole_top">pole_top</option>
+    
+                        <option disabled>--- Tiles (Underground) --- </option>
+                        <option value="tile/ug_ground">ug_ground</option>
+                        <option value="tile/ug_hard">ug_hard</option>
+                        <option value="tile/ug_brick">ug_brick</option>
+    
+    
+                        <option disabled>--- Special Tiles ---</option>
+                        <option value="tile/conveyor_l">conveyor_l</option>
+                        <option value="tile/conveyor_r">conveyor_r</option>
+                        <option value="tile/fast_conveyor_l">fast_conveyor_l</option>
+                        <option value="tile/fast_conveyor_r">fast_conveyor_r</option>
+    
+                        <option disabled>--- Pipe ---</option>
+                        <option value="tile/pipe_top_l">pipe_top_l</option>
+                        <option value="tile/pipe_top_r">pipe_top_r</option>
+                        <option value="tile/pipe_l">pipe_l</option>
+                        <option value="tile/pipe_r">pipe_r</option>
+                        <option value="tile/pipe_hor_b">pipe_hor_b</option>
+                        <option value="tile/pipe_hor_t">pipe_hor_t</option>
+                        <option value="tile/pipe_hor_end_b">pipe_hor_end_b</option>
+                        <option value="tile/pipe_hor_end_t">pipe_hor_end_t</option>
+                        <option value="tile/pipe_inter_b">pipe_inter_b</option>
+                        <option value="tile/pipe_inter_t">pipe_inter_t</option>
+                        <option value="tile/warp">warp</option>
+                        <option value="tile/warp_right">warp_right</option>
+                        <option value="structure/pipe">PIPE</option>
+                        <option value="structure/pipe_neck">PIPE_NECK</option>
+    
+                        <option disabled>--- BG Bricks ---</option>
+                        <option value="tile/black">black</option>
+                        <option value="tile/bg_brick">bg_brick</option>
+                        <option value="tile/bg_brick_door">bg_brick_door</option>
+                        <option value="tile/bg_brick_mid">bg_brick_mid</option>
+                        <option value="tile/bg_brick_top">bg_brick_top</option>
+                        <option value="tile/brick_window_l">brick_window_l</option>
+                        <option value="tile/brick_window_r">brick_window_r</option>
+                        <option value="structure/castle">castle</option>
+                        <option value="structure/flagpole">flagpole</option>
+    
+                        <option disabled>--- Slopes ---</option>
+                        <option value="tile/ground_slope_l">ground_slope_l</option>
+                        <option value="tile/ground_slope_r">ground_slope_r</option>
+    
+                        <option disabled>--- OBJECTS ---</option>
+                        <option value="object/mario">mario</option>
+                        <option value="object/luigi">luigi</option>
+                        <option value="object/smb3_mario">smb3_mario</option>
+                        <option value="object/megaman">megaman</option>
+                        <option value="object/mount">mount</option>
+                        <option value="object/goomba">goomba</option>
+                        <option value="object/koopa">koopa</option>
+                        <option value="object/shell">shell</option>
+                        <option value="object/red_koopa">red_koopa</option>
+                        <option value="object/red_shell">red_shell</option>
+                        <option value="object/bill">bill</option>
+                        <option value="object/mushroom">mushroom</option>
+                        <option value="object/life">life</option>
+                        <option value="object/star">star</option>
+                        <option value="object/flower">flower</option>
+                        <!-- <option value="object/leaf">leaf</option> -->
+                        <option value="object/cloud">cloud</option>
+                        <option value="object/parkour">parkour</option>
+                        <option value="object/fireball">fireball</option>
+                        <option value="object/lemon">lemon</option>
+                        <option value="object/particle">particle</option>
+                    </select>
+                </label>
             </div>
         </div>
     </div>

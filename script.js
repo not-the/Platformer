@@ -128,7 +128,8 @@ function downloadLevel() {
     link.remove();
 }
 
-class physicsObject {
+// Entity class
+class entity {
     constructor(
         data = {},
         additional_data={},
@@ -514,7 +515,7 @@ class physicsObject {
     //     return tile;
     // }
 
-    /** Player animations handler */
+    /** Animate by state */
     animations() {
         
         /* ----- Animate ----- */
@@ -656,7 +657,6 @@ class physicsObject {
         // Power action
         const power = powers?.[this.form];
         if(power?.action !== undefined) power.action(this);
-        
     }
     powerJump() {
         // if(this.power_ready == false) return;
@@ -735,88 +735,22 @@ class physicsObject {
 
         let [top, side] = this.objectCollisionDirection(subject);
         const dir = side == 'left' ? subject.walk : subject.walk*-1;
-        let nodamage = false;
-        if(subject.bounces_player && top) nodamage = true;
+        // let nodamage = false;
+        // if(subject.bounces_player && top) nodamage = true;
 
         // Interactions
         if(this?.ai_info.auto_ride?.includes(subject.type) && top) this.ride(subject); // Auto ride
         if(this.player != false && subject.bounces_player && top && !this.star_mode) this.bounce(subject); // Player bounce
 
+        return; // temporary
+
         // Take damage
         let takeDamage = ((subject.deal_damage && !nodamage));
         if(subject.type === 'shell' && subject.motion.x === 0) takeDamage = false;
         if(takeDamage) this.damage(subject, dir, top);
-
-        // Unique behavior
-        if(this.player != false) {
-            switch (subject.enemy) {
-                // Shell
-                case 'shell':
-                    if(top || subject.motion.x === 0) kick();
-                    else {
-                        if(subject.motion.x === 0) kick();
-                    }
-                    /** Kicks shell */
-                    function kick() { subject.motion.x = subject.motion.x === 0 ? dir : 0; }
-                    break;
-                case 'powerup':
-                    if(!this.powers_up) return;
-                    let power = subject.type;
-                    subject.despawn();
-                    if(this.form != 'small' && power == 'big') return;
-                    if(this.form != power) {
-                        world.paused = true;
-                        setTimeout(() => {
-                            world.paused = false;
-                            // this.sprite_override = undefined;
-                        }, 500);
-                    }
-                    this.form = power;
-                    // this.sprite_override = 'powering_up';
-                    break;
-                case 'star':
-                    this.star_mode = 1200;
-                    break;
-                // case 'mount':
-                //     if(top && Math.sign(this.motion.y) == 1) this.ride(subject);
-                //     break;
-                default:
-                    break;
-            }
-        }
         
         // Repeat for subject
         if(!stop) subject.interaction(this, true);
-
-        // if(this.enemy == 'shell' && subject.enemy == 'shell') { // Both shells
-        //     let dir = this.objectCollisionDirection(subject)[1];
-        //     if(this.motion.x == 0 && subject.motion.x != 0) this.genericDeathAnimation(dir === 'left' ? 1 : -1);
-
-        //     // actor = subject; actee = this;
-        //     // subject.death(this, Math.sign(subject.motion.x));
-        //     // actee.death(actor, Math.sign(actor.motion.x));
-        // }
-        // else if(this.enemy == 'shell') {
-        //     actor = this; actee = subject;
-        //     actee.damage(actor, Math.sign(actor.motion.x));
-        // }
-        // else if(subject.enemy == 'shell') {
-        //     actor = subject; actee = this;
-        //     actee.damage(actor, Math.sign(actor.motion.x));
-        // }
-
-        // else if(this.enemy == 'fireball' && subject.enemy != 'fireball') {
-        //     actor = this; actee = subject;
-        //     actor.damage();
-        //     actee.damage(actor, Math.sign(actor.motion.x));
-        // }
-        // else if(subject.enemy == 'fireball' && this.enemy != 'fireball') {
-        //     actor = subject; actee = this;
-        //     actor.damage();
-        //     actee.damage(actor, Math.sign(actor.motion.x));
-        // }
-
-        // if(this.enemy == 'powerup')
     }
 
     /** Attaches an object to the top of another object */
@@ -868,8 +802,72 @@ class physicsObject {
         }, 500);
     }
 
-    /** Player death */
-    deathPlayer() {
+    /** Non-player death */
+    death(source={}, dir=0, top=false) {
+        this.dead = true;
+        this.motion.x = 0;
+        
+        switch (this.enemy) {
+            case 'shell':
+                this.genericDeathAnimation(dir);
+            case 'fireball':
+                spawn('particle', this.s.x, this.s.y, { texture: this.texture_dead || 'none', doMotion: false, animation_speed: 0.2, lifespan: 200, });
+                this.despawn();
+                break;
+            default:
+                this.despawn();
+                break;
+        }
+    }
+
+    /** Generic death animation */
+    genericDeathAnimation(dir=1) {
+        if(world.paused) return this.despawn();
+        if(this.rider) this.rider.unride();
+        this.dead = true;
+        this.collision = false;
+        this.gravity_multiplier = 1;
+        this.s.scale.y *= -1;
+        this.motion.x = 3*dir;
+        this.motion.y = -4;
+        this.motion.r = 5*dir;
+        setTimeout(() => { this.despawn(); }, 3000);
+    }
+
+    /** Despawn */
+    despawn() {
+        if(this.rider) this.rider.unride();
+        if(this.owner && this.owner.projectiles > 0) this.owner.projectiles--;
+        deleteSprite(this.s);
+        delete physicsObjects[this.id];
+    }
+
+
+    /** Move based on motion */
+    runMotion(axis='x') { this.s[axis] += this.motion[axis]; }
+}
+
+class player extends entity {
+    interaction(source={}) {
+        if(source.code === 'powerup') {
+            if(!this.powers_up) return;
+            let power = source.type;
+            source.despawn();
+            if(this.form != 'small' && power == 'big') return;
+            if(this.form != power) {
+                world.paused = true;
+                setTimeout(() => {
+                    world.paused = false;
+                    // this.sprite_override = undefined;
+                }, 500);
+            }
+            this.form = power;
+            // this.sprite_override = 'powering_up';
+        }
+        if(this.star_mode) source.damage(this);
+    }
+    death(source={}, dir=0, top=false) {
+        this.dead = true;
         this.animate_by_state = false;
         if(anim[`${this.type}_dead`]) this.s.textures = anim[`${this.type}_dead`];
         this.collision = false;
@@ -916,74 +914,113 @@ class physicsObject {
             // [this.s.x, this.s.y] = convertCoord(...[3, 6]);
         }, 3000);
     }
-
-    /** Non-player death */
-    death(source={}, dir=0, top=false) {
-        this.dead = true;
-
-        if(this.player != false) return this.deathPlayer();
-        this.motion.x = 0;
-        switch (this.enemy) {
-            case 'goomba':
-                if(source.player != false && !top) {
-                    this.s.textures = anim.goomba_flat;
-                    setTimeout(() => { this.despawn(); }, 1000);
-                }
-                else this.genericDeathAnimation(dir);
-                break;
-            case 'koopa':
-            case 'red_koopa':
-                if(source.player != false && !top) {
-                    let drop = this.texture == 'red_koopa' ? 'red_shell': 'shell';
-                    spawn(drop, this.s.x, this.s.y);
-                    this.despawn();
-                } else {
-                    this.s.textures = this.texture == 'red_koopa' ? anim.red_shell: anim.shell;
-                    this.genericDeathAnimation(dir);
-                }
-                break;
-            case 'shell':
-                this.genericDeathAnimation(dir);
-            case 'fireball':
-                spawn('particle', this.s.x, this.s.y, { texture: this.texture_dead || 'none', doMotion: false, animation_speed: 0.2, lifespan: 200, });
-                this.despawn();
-                break;
-            default:
-                this.despawn();
-                break;
+}
+class star extends entity {
+    interaction(subject) {
+        if(subject.player) {
+            subject.star_mode = 1200;
+            this.despawn();
         }
     }
+}
+class goomba extends entity {
+    interaction(subject) {
+        // Generic
+        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
+        let [top, side] = this.objectCollisionDirection(subject);
+        let [subject_top, subject_side] = subject.objectCollisionDirection(this);
 
-    /** Generic death animation */
-    genericDeathAnimation(dir=1) {
-        if(world.paused) return this.despawn();
-        if(this.rider) this.rider.unride();
+        // Player
+        if(subject.deal_damage === 'player') {
+            if(subject_top) {
+                this.damage();
+                subject.bounce();
+            }
+            else subject.damage();
+        }
+
+        // Goomba stack
+        if(top && subject.type === 'goomba') this.ride(subject);
+    }
+    death(source={}, dir=0, top=false) {
+        // Generic
         this.dead = true;
-        this.collision = false;
-        this.gravity_multiplier = 1;
-        this.s.scale.y *= -1;
-        this.motion.x = 3*dir;
-        this.motion.y = -4;
-        this.motion.r = 5*dir;
-        setTimeout(() => { this.despawn(); }, 3000);
+        this.motion.x = 0;
+
+        // Goomba death
+        if(source.player != false && !top) {
+            this.s.textures = anim.goomba_flat;
+            setTimeout(() => { this.despawn(); }, 1000);
+        }
+        else this.genericDeathAnimation(dir);
     }
+}
+class koopa extends entity {
+    interaction(subject) {
+        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
+        let [top, side] = this.objectCollisionDirection(subject);
+        let [subject_top, subject_side] = subject.objectCollisionDirection(this);
 
-    /** Despawn */
-    despawn() {
-        if(this.rider) this.rider.unride();
-        if(this.owner && this.owner.projectiles > 0) this.owner.projectiles--;
-        deleteSprite(this.s);
-        delete physicsObjects[this.id];
+        // Player
+        if(subject.deal_damage === 'player') {
+            console.log('enteraction');
+            if(subject_top) {
+                this.damage(subject);
+                subject.bounce();
+            }
+            else subject.damage(this);
+        }
     }
+    death(source={}, dir=0, top=false) {
+        // this.dead = true;
+        // this.motion.x = 0;
+        console.log('edeath');
 
+        if(source.code === 'player') {
+            console.log("DROP SHELL")
+            let drop = this.texture == 'red_koopa' ? 'red_shell': 'shell';
+            spawn(drop, this.s.x, this.s.y).invincible = 2;
+            this.despawn();
+        } else {
+            this.s.textures = this.texture == 'red_koopa' ? anim.red_shell: anim.shell;
+            this.genericDeathAnimation(dir);
+        }
+    }
+}
+class shell extends entity {
+    interaction(subject) {
+        // Generic
+        if(this.dead || subject.dead || !this.collision || !subject.collision || this.invincible) return;
+        let [top, side] = this.objectCollisionDirection(subject);
+        let dir = side === 'left' ? -1 : 1;
+        let [subject_top, subject_side] = subject.objectCollisionDirection(this);
 
-    /** Move based on motion */
-    runMotion(axis='x') { this.s[axis] += this.motion[axis]; }
+        // Shell behavior
+        if(Math.sign(this.motion.x) !== Math.sign(dir) && Math.sign(this.motion.x !== 0) && !subject_top) subject.damage();
+        else if(subject.code === 'player') {
+            this.invincible = 12;
+            if(this.motion.x === 0) this.motion.x = this.walk*dir;
+            else this.motion.x = 0;
+            if(subject_top) subject.bounce();
+        }
+    }
 }
 
-function deleteSprite(s) {
-    app.stage.removeChild(s); // Delete PIXI sprite
+const entities = {
+    'player': player,
+    'star':   star,
+    // 'powerup': powerup,
+    'goomba': goomba,
+    'koopa':  koopa,
+    'shell':  shell,
 }
+
+
+
+
+
+/** Deletes a sprite */
+function deleteSprite(s) { app.stage.removeChild(s); }
 
 /** Creates and returns a tile */
 function tile(type='ground', x=0, y=0, contained) {
@@ -1206,7 +1243,8 @@ function updateLevelOptions() {
 function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
     if(Object.keys(physicsObjects).length > 250) return console.warn('Object limit reached (250)');
     if(objectTemplate[name] == undefined) return console.warn('Not an object');
-    let o = new physicsObject(objectTemplate[name], data, data_referential);
+    const objClass = entities[objectTemplate[name]?.code] || entities[name] || entity;
+    let o = new objClass(objectTemplate[name], data, data_referential);
     o.s.x = x;
     o.s.y = y;
     o.s.scale.x = o.facing * 3;
@@ -1420,7 +1458,7 @@ function gameTick(delta, repeat=false) {
     }
 
     // Editor
-    if(world.editing && world.paused) {
+    if(world.editing && world.paused && world.menu === 'editor') {
         let dis = pressed['shift'] ? 10 : 4;
         if(pressed['arrowright'] || pressed['d'])   panCamera(app.stage.x - dis,    app.stage.y);
         if(pressed['arrowleft'] || pressed['a'])    panCamera(app.stage.x + dis,    app.stage.y);
@@ -1445,16 +1483,12 @@ function gameTick(delta, repeat=false) {
 
             // Pythagorean theorem
             if(distance(one, two)[0] <= one.s.width/2 + two.s.width/2) { // 48 if both are 48 wide
-                let player = false;
-                let nonplayer = false;
-                if(one.player != false) { player = one; nonplayer = two; }
-                if(two.player != false) { player = two; nonplayer = one; }
-                // if(player != false) {
-                //     player.playerReaction(nonplayer);
-                // } else {
-                //     one.interaction(two);
-                // }
+                // let player = false;
+                // let nonplayer = false;
+                // if(one.player != false) { player = one; nonplayer = two; }
+                // if(two.player != false) { player = two; nonplayer = one; }
                 one.interaction(two);
+                two.interaction(one);
             }
         }
     }
@@ -1485,84 +1519,84 @@ function gameTick(delta, repeat=false) {
     filters.rainbow.hue(cycle*1.5 % 360);
 
     // Debug
-    try {
-        let pad = navigator.getGamepads()[players[0]['gamepad_index']] ;
-        document.getElementById('debug').innerHTML = `
-        <table>
-            <tr>
-                <td>(0) X</td>
-                <th>${pad.buttons[0].pressed ? pad.buttons[0].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(1) O</td>
-                <th>${pad.buttons[1].pressed ? pad.buttons[1].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(2) Square</td>
-                <th>${pad.buttons[2].pressed ? pad.buttons[2].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(3) Triangle</td>
-                <th>${pad.buttons[3].pressed ? pad.buttons[3].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(4) L Bumper</td>
-                <th>${pad.buttons[4].pressed ? pad.buttons[4].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(5) R Bumper</td>
-                <th>${pad.buttons[5].pressed ? pad.buttons[5].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(6) L Trigger </td>
-                <th>${pad.buttons[6].pressed ? pad.buttons[6].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(7) R Trigger</td>
-                <th>${pad.buttons[7].pressed ? pad.buttons[7].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(8) Select</td>
-                <th>${pad.buttons[8].pressed ? pad.buttons[8].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(9) Start</td>
-                <th>${pad.buttons[9].pressed ? pad.buttons[9].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(10) L3</td>
-                <th>${pad.buttons[10].pressed ? pad.buttons[10].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(11) R3</td>
-                <th>${pad.buttons[11].pressed ? pad.buttons[11].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(12) Up DPAD</td>
-                <th>${pad.buttons[12].pressed ? pad.buttons[12].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(13) Down DP</td>
-                <th>${pad.buttons[13].pressed ? pad.buttons[13].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(14) Left DP</td>
-                <th>${pad.buttons[14].pressed ? pad.buttons[14].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(15) Right DP</td>
-                <th>${pad.buttons[15].pressed ? pad.buttons[15].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(16) HOME</td>
-                <th>${pad.buttons[16].pressed ? pad.buttons[16].pressed : ''}</th>
-            </tr>
-            <tr>
-                <td>(17) Trackpad Click</td>
-                <th>${pad.buttons[17].pressed ? pad.buttons[17].pressed : ''}</th>
-            </tr>
-        </table>`;
-    } catch (error) { }
+    // try {
+    //     let pad = navigator.getGamepads()[players[0]['gamepad_index']] ;
+    //     document.getElementById('debug').innerHTML = `
+    //     <table>
+    //         <tr>
+    //             <td>(0) X</td>
+    //             <th>${pad.buttons[0].pressed ? pad.buttons[0].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(1) O</td>
+    //             <th>${pad.buttons[1].pressed ? pad.buttons[1].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(2) Square</td>
+    //             <th>${pad.buttons[2].pressed ? pad.buttons[2].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(3) Triangle</td>
+    //             <th>${pad.buttons[3].pressed ? pad.buttons[3].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(4) L Bumper</td>
+    //             <th>${pad.buttons[4].pressed ? pad.buttons[4].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(5) R Bumper</td>
+    //             <th>${pad.buttons[5].pressed ? pad.buttons[5].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(6) L Trigger </td>
+    //             <th>${pad.buttons[6].pressed ? pad.buttons[6].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(7) R Trigger</td>
+    //             <th>${pad.buttons[7].pressed ? pad.buttons[7].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(8) Select</td>
+    //             <th>${pad.buttons[8].pressed ? pad.buttons[8].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(9) Start</td>
+    //             <th>${pad.buttons[9].pressed ? pad.buttons[9].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(10) L3</td>
+    //             <th>${pad.buttons[10].pressed ? pad.buttons[10].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(11) R3</td>
+    //             <th>${pad.buttons[11].pressed ? pad.buttons[11].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(12) Up DPAD</td>
+    //             <th>${pad.buttons[12].pressed ? pad.buttons[12].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(13) Down DP</td>
+    //             <th>${pad.buttons[13].pressed ? pad.buttons[13].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(14) Left DP</td>
+    //             <th>${pad.buttons[14].pressed ? pad.buttons[14].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(15) Right DP</td>
+    //             <th>${pad.buttons[15].pressed ? pad.buttons[15].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(16) HOME</td>
+    //             <th>${pad.buttons[16].pressed ? pad.buttons[16].pressed : ''}</th>
+    //         </tr>
+    //         <tr>
+    //             <td>(17) Trackpad Click</td>
+    //             <th>${pad.buttons[17].pressed ? pad.buttons[17].pressed : ''}</th>
+    //         </tr>
+    //     </table>`;
+    // } catch (error) { }
     // document.getElementById('debug').innerHTML = `
     // <table>
     //     <tr>

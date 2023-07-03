@@ -1,3 +1,12 @@
+v0.17   July 3, 2023
+- Fixed interactions for a number of entities
+- Fixed the camera panning during the pause that powering up causes, and while editor mode is enabled
+- Typing with the draw dropdown open will no longer change your selection (eg pressing Q to close would also select "Question Block")
+Internal changes
+- Renamed the class "physicsObject" -> "entity"
+- Created extensions of the "entity" class for entities with unique code/interactions
+
+
 v0.16   May 26, 2023
 - Sub-level support (import only, needs to be manually added to JSON file after exporting 2 levels)
 - Dying with only one player onscreen will now reset the level. Dying with more than 1 will respawn you at the location of the most recently spawned player

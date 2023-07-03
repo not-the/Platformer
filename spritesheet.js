@@ -47,6 +47,11 @@ function average(array) {
 }
 /** Adds or removes a class from an element */
 function style(element, classname, state) { state ? element.classList.add(classname) : element.classList.remove(classname); }
+/** Disable keyboard on SELECT element. Source: https://stackoverflow.com/a/1227324 */
+function IgnoreAlpha(e) {
+    if(!e) e = window.event;
+    if (e.keyCode >= 65 && e.keyCode <= 90) [e.returnValue, e.cancel] = [false, true];
+}
 
 /** Sets sprite anchor and scale */
 function spriteFix(sprite, anchors=true) {

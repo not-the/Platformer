@@ -367,6 +367,7 @@ const objectTemplate = {
     },
     'mario': {
         texture: 'mario_small_still',
+        code: 'player',
     
         type: 'mario',
         player: 1,
@@ -396,6 +397,7 @@ const objectTemplate = {
     },
     'luigi': {
         texture: 'luigi_small_still',
+        code: 'player',
     
         type: 'luigi',
         player: 2,
@@ -429,6 +431,7 @@ const objectTemplate = {
     // Mega Man
     'megaman': {
         texture: 'megaman_big_still',
+        code: 'player',
     
         type: 'megaman',
         player: 1,
@@ -576,8 +579,9 @@ const objectTemplate = {
     // Red Koopa
     'red_koopa': {
         texture: 'red_koopa',
+        code: 'koopa',
 
-        type: 'koopa',
+        type: 'red_koopa',
         player: false,
         enemy: 'koopa',
         ai_info: {
@@ -666,6 +670,7 @@ const objectTemplate = {
     // Items
     'mushroom': {
         texture: 'mushroom',
+        code: 'powerup',
 
         type: 'big',
         player: false,
@@ -730,6 +735,7 @@ const objectTemplate = {
     },
     'flower': {
         texture: 'flower',
+        code: 'powerup',
 
         type: 'fire',
         player: false,
@@ -758,6 +764,7 @@ const objectTemplate = {
     },
     'star': {
         texture: 'star',
+        code: 'star',
 
         type: 'star',
         player: false,
@@ -803,6 +810,7 @@ const objectTemplate = {
     // },
     'cloud': {
         texture: 'flower',
+        code: 'powerup',
 
         type: 'cloud',
         player: false,
@@ -817,6 +825,7 @@ const objectTemplate = {
     },
     'parkour': {
         texture: 'parkour',
+        code: 'powerup',
 
         type: 'parkour',
         player: false,
@@ -934,6 +943,7 @@ const objectTemplate = {
     // Mario 3
     'smb3_mario': {
         texture: 'smb3_mario_small_still',
+        code: 'player',
     
         type: 'smb3_mario',
         player: 1,
@@ -961,6 +971,7 @@ const objectTemplate = {
     // My game
     'dude': {
         texture: 'dude_small_still',
+        code: 'player',
     
         type: 'dude',
         player: 1,
