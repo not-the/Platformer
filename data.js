@@ -373,7 +373,7 @@ const objectTemplate = {
         player: 1,
         // enemy: false,
         deal_damage: 'player',
-        immune: ['player', 'under'],
+        immune: ['player', 'fireball', 'under'],
         interacts: ['b'],
         powers_up: true,
 
@@ -403,7 +403,7 @@ const objectTemplate = {
         player: 2,
         // enemy: false,
         deal_damage: 'player',
-        immune: ['player', 'under'],
+        immune: ['player', 'fireball', 'under'],
         interacts: ['b'],
         powers_up: true,
 
@@ -431,13 +431,13 @@ const objectTemplate = {
     // Mega Man
     'megaman': {
         texture: 'megaman_big_still',
-        code: 'player',
+        code: 'megaman',
     
         type: 'megaman',
         player: 1,
         form: 'big',
         // deal_damage: 'player',
-        immune: ['player'],
+        immune: ['player', 'fireball', 'under'],
         interacts: ['b'],
 
         animate_by_state: true,
@@ -611,8 +611,9 @@ const objectTemplate = {
     // Temporary - replace with normal shell + texture_override
     'red_shell': {
         texture: 'red_shell',
+        code: 'shell',
 
-        type: 'shell',
+        type: 'red_shell',
         player: false,
         enemy: 'shell',
         ai_info: {
@@ -682,7 +683,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
 
         doMotion: true,
         collision: true,
@@ -714,7 +715,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
 
         doMotion: true,
         collision: true,
@@ -741,7 +742,7 @@ const objectTemplate = {
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
         tiered_powerup: true,
 
         doMotion: true,
@@ -777,7 +778,7 @@ const objectTemplate = {
             dissipate_at_wall: false,
         },
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
 
         doMotion: true,
         collision: true,
@@ -809,14 +810,14 @@ const objectTemplate = {
     //     friction: true,
     // },
     'cloud': {
-        texture: 'flower',
+        texture: 'cloud_flower',
         code: 'powerup',
 
         type: 'cloud',
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
         tiered_powerup: false,
 
         doMotion: true,
@@ -831,7 +832,7 @@ const objectTemplate = {
         player: false,
         enemy: 'powerup',
         bounces_player: false,
-        immune: ['enemy', 'under'],
+        immune: ['enemy', 'fireball', 'under'],
         tiered_powerup: false, // // //
 
         doMotion: true,
@@ -856,8 +857,8 @@ const objectTemplate = {
             despawn_on_unload: true,
         },
         bounces_player: false,
-        immune: ['under', 'player'],
-        deal_damage: 'player',
+        immune: ['under', 'fireball', 'player'],
+        deal_damage: 'fireball',
 
         doMotion: true,
         collision: true,
@@ -886,8 +887,8 @@ const objectTemplate = {
             despawn_on_unload: true,
         },
         bounces_player: false,
-        immune: ['under', 'player'],
-        deal_damage: 'player',
+        immune: ['under', 'fireball', 'player'],
+        deal_damage: 'fireball',
         interacts: ['b', 's', 'a'],
 
         doMotion: true,
@@ -949,7 +950,7 @@ const objectTemplate = {
         player: 1,
         // enemy: false,
         deal_damage: 'player',
-        immune: ['player', 'under'],
+        immune: ['player', 'fireball', 'under'],
         interacts: ['b'],
         powers_up: true,
 
@@ -977,7 +978,7 @@ const objectTemplate = {
         player: 1,
         // enemy: false,
         deal_damage: 'player',
-        immune: ['player', 'under'],
+        immune: ['player', 'fireball', 'under'],
         interacts: ['b'],
         powers_up: false,
 
@@ -1008,6 +1009,7 @@ class tileData {
 
         collision: false,
         collisionCode: false,
+        friction: 1,
         slope: false,
         conveyor_speed: undefined,
 
@@ -1022,6 +1024,7 @@ class tileData {
         { u:true, r:true, d:true, l:true, in:true } : { u:false, r:false, d:false, l:false, in:false };
         this.sides = data.sides;
         this.collisionCode = data.collisionCode;
+        this.friction = data.friction === undefined ? 1 : data.friction;
         this.slope = data.slope;
         this.conveyor_speed = data.conveyor_speed;
 
@@ -1080,9 +1083,16 @@ class tileData {
                     }
                     break;
                 case 'damage':
-                    source.damage({ deal_damage: 'sharp' });
+                    if(source.code === 'player') source.damage({ deal_damage: 'sharp' });
                     break;
+                case 'kill':
+                    if(source.code === 'player') source.death();
+                    break;
+                // case 'donut':
+                //     // Donut
+                //     break;
                 case 'coin':
+                    if(!source.player) return;
                     collectCoin();
                     this.set(tile, '_');
                     break;
@@ -1253,11 +1263,22 @@ const tileDataset = {
         collisionCode: 'coin',
         insertable: true,
     }),
+    'ice': new tileData({
+        texture: anim.ice,
+        collision: true,
+        friction: 0.3,
+    }),
     'spikes': new tileData({
         texture: anim.spikes,
 
         collision: true,
         collisionCode: 'damage',
+    }),
+    'donut': new tileData({
+        texture: anim.donut,
+
+        collision: true,
+        // collisionCode: 'donut',
     }),
     'bridge': new tileData({
         texture: anim.bridge,
@@ -1303,6 +1324,14 @@ const tileDataset = {
         collision: true,
         collisionCode: 'conveyor',
         conveyor_speed: 0.06,
+    }),
+    'lava_top': new tileData({
+        texture: anim.lava_top,
+        collisionCode: 'kill',
+    }),
+    'lava': new tileData({
+        texture: anim.lava,
+        collisionCode: 'kill',
     }),
 
     'warp': new tileData({
@@ -1402,17 +1431,16 @@ const tileDataset = {
     'ground_slope_l': new tileData({
         // type: 'ground',
         texture: anim.ground_slope_l,
-        // collision: { l: true, d: true,},
+        collision: { l: true, d: true,},
         collision: false,
-        // slope: [48, 0],
         slope: 'reverse', // temporary
     }),
     'ground_slope_r': new tileData({
         // type: 'ground',
         texture: anim.ground_slope_r,
-        // collision: { r: true, d: true,},
+        collision: { r: true, d: true,},
         collision: false,
-        slope: [0, 48],
+        slope: 'normal',
     }),
 
 
@@ -1517,7 +1545,7 @@ const structures = {
 
 
 const powers = {
-    // Temporary - Mega Man projectiles/animations
+    // Temporary - Mega Man projectiles
     'big': {
         action: object => {
             if(object.type !== 'megaman') return;
@@ -1532,44 +1560,6 @@ const powers = {
             spawn('lemon', object.s.x+object.facing*24, object.s.y-30, {facing: object.facing, lifespan: 7000 }, { owner: object });
             object.projectiles++;
         },
-        animate: object => {
-            if(object.type !== 'megaman') return;
-            if(!object.power_anim) return;
-
-            /* ----- Animate ----- */
-            // Override
-            if(object.sprite_override) {
-                object.s.textures = anim[object.sprite_override];
-            }
-
-            // Crouch
-            else if(object.crouching) {
-                object.s.textures = anim[`${object.type}_${object.form}_crouch_firing`];
-            }
-            // Jump
-            else if(!object.grounded) {
-                if(!object.jump_ready) object.s.textures = anim[`${object.type}_${object.form}_jump_firing`];
-                else object.s.textures = anim[`${object.type}_${object.form}_fall_firing`];
-            }
-            // Turn
-            else if(
-                object.controls.right && Math.sign(object.motion.x) == -1
-                || object.controls.left && Math.sign(object.motion.x) == 1
-            ) {
-                object.s.textures = anim[`${object.type}_${object.form}_turn_firing`];
-            }
-            // Run
-            else if(object.controls.right || object.controls.left) {
-                if(object.s.textures != anim[`${object.type}_${object.form}_run_firing`]) {
-                    object.s.textures = anim[`${object.type}_${object.form}_run_firing`];
-                    playPauseSprite(object.s);
-                }
-            }
-            // Still
-            else {
-                object.s.textures = anim[`${object.type}_${object.form}_still_firing`];
-            }
-        }
     },
     'parkour': {
         animate: object => {

@@ -186,10 +186,14 @@
         "coin1": "tile/coin1",
         "coin2": "tile/coin2",
         "coin3": "tile/coin3",
+        "ice": "tile/ice_block",
         "spikes": "tile/spikes",
+        "donut": "tile/donut",
         "bridge": "tile/bridge",
         "pole": "tile/pole",
         "pole_top": "tile/pole_top",
+        "lava_top": "tile/lava_top",
+        "lava": "tile/lava",
     
         "// Part": 0,
         "pipe_top_l": "tile/pipe_top_l",
@@ -262,6 +266,7 @@
         "star3": "item/star3",
         "star4": "item/star4",
         "parkour": "item/parkour",
+        "cloud_flower": "item/cloud_flower",
     
         "// Projectile": 0,
         "fireball1": "item/fireball1",

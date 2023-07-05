@@ -194,9 +194,9 @@ class entity {
         if(world.paused) return;
         if(this.ghost) return this.despawn(); // Editor ghost
         
-        // if(this.invincible > 0 && cycle % 30 > 15) {
-        //     this.s.opacity = 0;
-        // } else this.s.opacity = 1;
+        // Iframe blinking
+        if(this.player && this.invincible > 0 && cycle % 30 > 15) this.s.alpha = 0;
+        else this.s.alpha = 1;
 
         if(this.unloaded || !this.s.visible) return; // Unloaded
         if(this.doMotion) this.physics();
@@ -204,6 +204,9 @@ class entity {
         if(this.disabled) return;
         if(this.player) this.playerControls(); /** Player controlled */
         else if(this.ai_info) this.ai(); /** AI controlled */
+
+        // Animate
+        if(this.power_anim > 0) this.power_anim--;
         if(this.animate_by_state) this.animations();
     }
 
@@ -363,9 +366,11 @@ class entity {
                 if(!(adj.inside.data.slope || adj.under.data.slope)) ground = convertCoord(undefined, Number(rcy))[1];
                 // Slope
                 else {
-                    // const standing_on = adj.under.data.slope ? adj.under : adj.inside;
+                    let standing = adj.inside.data.slope ? adj.inside.data.slope : adj.under.data.slope; // Determine which block entity is on
                     let tileY = adj.under.data.slope ? rcy+1 : rcy // Mario is only "inside" the slope for the bottom half, so compensate for him being above it when necessary
+
                     let sh = Math.round(this.s.x % 48) + 6; // Plus six so Mario doesnt collide with tiles underneath
+                    if(standing === 'reverse') sh = 48-sh+12; // Reverse slope
                     ground = convertCoord(undefined, Number(tileY))[1] - sh;
                     if(this.s.y > ground) this.s.y = ground;
                 }
@@ -484,7 +489,8 @@ class entity {
         
         // Apply friction
         if(this.friction) {
-            if(this.grounded) this.motion.x -= (this.motion.x * (1 - world.resist_x*this.traction)); // Ground friction
+            if(this.grounded) this.motion.x -= (this.motion.x * (1 - world.resist_x*this.traction)) // Ground friction
+            * this.adj.under.data.friction; // Tile friction
             else this.motion.x *= world.air_resist_x*this.air_traction; // Air friction
             if(Math.abs(this.motion.x) < world.absolute_slow) this.motion.x = 0; // Round to 0
         }
@@ -522,11 +528,7 @@ class entity {
         // Override
         if(this.sprite_override) setAnimation(this.s, this.sprite_override);
         // Using power
-        else if(this.power_anim > 0) {
-            setAnimation(this.s, `${this.type}_${this.form}_throw`);
-            this.power_anim--;
-        }
-
+        else if(this.power_anim > 0) setAnimation(this.s, `${this.type}_${this.form}_throw`);
 
         // Crouch
         else if(this.crouching) setAnimation(this.s, `${this.type}_${this.form}_crouch`);
@@ -790,8 +792,8 @@ class entity {
 
         // Damage
         if(this.rider) this.rider.unride();
-        if(this.form == 'small') return this.death(source, dir);
-        else if(this.form == 'big') this.form = 'small';
+        if(this.form === 'small') return this.death(source, dir);
+        else if(this.form === 'big') this.form = 'small';
         else this.form = 'big';
         this.invincible = 120;
         // this.sprite_override = 'powering_up';
@@ -809,6 +811,7 @@ class entity {
         
         switch (this.enemy) {
             case 'shell':
+            case 'bill':
                 this.genericDeathAnimation(dir);
             case 'fireball':
                 spawn('particle', this.s.x, this.s.y, { texture: this.texture_dead || 'none', doMotion: false, animation_speed: 0.2, lifespan: 200, });
@@ -864,7 +867,7 @@ class player extends entity {
             this.form = power;
             // this.sprite_override = 'powering_up';
         }
-        if(this.star_mode) source.damage(this);
+        if(this.star_mode && source.code !== 'powerup' && !source.player) source.genericDeathAnimation(this);
     }
     death(source={}, dir=0, top=false) {
         this.dead = true;
@@ -913,6 +916,45 @@ class player extends entity {
             [this.s.x, this.s.y] = [last_player.s.x, last_player.s.y-96];
             // [this.s.x, this.s.y] = convertCoord(...[3, 6]);
         }, 3000);
+    }
+}
+class megaman extends player {
+    animations() {
+        const f = this.power_anim ? '_firing' : '';
+
+        /* ----- Animate ----- */
+        // Override
+        if(this.sprite_override) {
+            this.s.textures = anim[this.sprite_override];
+        }
+
+        // Crouch
+        else if(this.crouching) {
+            this.s.textures = anim[`${this.type}_${this.form}_crouch${f}`];
+        }
+        // Jump
+        else if(!this.grounded) {
+            if(!this.jump_ready) this.s.textures = anim[`${this.type}_${this.form}_jump${f}`];
+            else this.s.textures = anim[`${this.type}_${this.form}_fall${f}`];
+        }
+        // Turn
+        else if(
+            this.controls.right && Math.sign(this.motion.x) == -1
+            || this.controls.left && Math.sign(this.motion.x) == 1
+        ) {
+            this.s.textures = anim[`${this.type}_${this.form}_turn${f}`];
+        }
+        // Run
+        else if(this.controls.right || this.controls.left) {
+            if(this.s.textures != anim[`${this.type}_${this.form}_run${f}`]) {
+                this.s.textures = anim[`${this.type}_${this.form}_run${f}`];
+                playPauseSprite(this.s);
+            }
+        }
+        // Still
+        else {
+            this.s.textures = anim[`${this.type}_${this.form}_still${f}`];
+        }
     }
 }
 class star extends entity {
@@ -1005,14 +1047,47 @@ class shell extends entity {
         }
     }
 }
+// Bill, etc
+class enemy extends entity {
+    interaction(subject) {
+        // Generic
+        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
+        let [top, side] = this.objectCollisionDirection(subject);
+        let [subject_top, subject_side] = subject.objectCollisionDirection(this);
+
+        // Player
+        if(subject.deal_damage === 'player') {
+            if(subject_top) {
+                this.damage();
+                subject.bounce();
+            }
+            else subject.damage();
+        }
+    }
+}
+class fireball extends entity {
+    interaction(subject) {
+        // Generic
+        if(this.dead || subject.dead || !this.collision || !subject.collision) return;
+
+        // Deal damage
+        if(!subject.immune.includes('fireball')) {
+            subject.damage();
+            this.despawn();
+        }
+    }
+}
 
 const entities = {
-    'player': player,
-    'star':   star,
+    'player':   player,
+    'megaman':  megaman,
+    'star':     star,
     // 'powerup': powerup,
-    'goomba': goomba,
-    'koopa':  koopa,
-    'shell':  shell,
+    'goomba':   goomba,
+    'koopa':    koopa,
+    'shell':    shell,
+    'bill':     enemy,
+    'fireball': fireball,
 }
 
 
@@ -1151,6 +1226,7 @@ function importLevel(data=false, type='url', sub='level', editor=false) {
             }
         }
 
+        app.renderer.background.color = 0x9290ff; // BG color
         spawn("mario", ...convertCoord(3, 11));
     }
 
@@ -1636,7 +1712,7 @@ function panCamera(x, y) {
     let range = [0, 25]; // 0-24 is the screen
     let posX = [];
     let posY = [];
-    for(let [key, obj] of Object.entries(physicsObjects)) if(obj.player && !obj.dead) { posX.push(obj.s.x); posY.push(obj.s.y); }
+    for(let [key, obj] of Object.entries(physicsObjects)) if(obj.player && (!obj.dead || Object.keys(player).length !== 1)) { posX.push(obj.s.x); posY.push(obj.s.y); }
     posX = Math.round(average(posX)) || 0;
     posY = Math.round(average(posY)) || 0;
     const sleft = (posX < (app.view.width * 2/5) - app.stage.x);

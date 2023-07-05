@@ -1,3 +1,19 @@
+v0.18   July 5, 2023
+- Fixed red shells being intangible
+- Non-players will no longer take damage from spikes
+- Non-players no longer collect coins
+- Reverse slopes are now functional
+- Fixed background color not resetting when creating a new level
+- Fixed the camera panning back to the start of the stage upon death in singleplayer
+- The player will now blink during invincibility frames
+- Updated Spikes texture
+- Cloud flower texture
+- Tiles:
+    + Ice
+    + Donut
+    + Lava (lava, lava_top)
+
+
 v0.17   July 3, 2023
 - Fixed interactions for a number of entities
 - Fixed the camera panning during the pause that powering up causes, and while editor mode is enabled
