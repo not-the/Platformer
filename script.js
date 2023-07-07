@@ -18,6 +18,7 @@ function join(method='keyboard', gamepad_index) {
         'method':           method,
         'gamepad_index':    gamepad_index,
     };
+    for(let [id, object] of Object.entries(physicsObjects)) if(object.player === playerID) players[playerID].object = object;
 
     /** Product code -> Name */
     // const controllers  = { "09cc)": "Dualshock", }
@@ -321,7 +322,6 @@ class entity {
                 adj[`${wi}, ${hi}`] = this.getAdjacent(wi, hm);
             }
         }
-        console.log(adj);
         return; */
         let rc = convertCoord(this.s.x, this.s.y, true);
         let rcx = Math.round(Number(rc[0]));
@@ -477,8 +477,6 @@ class entity {
             if(tall) adj.upright.data.collide('l', adj.upright, this);
         }
         this.colliding.r = (this.s.x % 48 >= 24 && tileDataset[adj.right.type].collision.l);
-
-        // console.log(this.colliding.l, this.colliding.r);
 
         // Move
         if(allowXMotion || !this.collision) this.runMotion('x'); // Move subject
@@ -1005,7 +1003,6 @@ class koopa extends entity {
 
         // Player
         if(subject.deal_damage === 'player') {
-            console.log('enteraction');
             if(subject_top) {
                 this.damage(subject);
                 subject.bounce();
@@ -1014,12 +1011,7 @@ class koopa extends entity {
         }
     }
     death(source={}, dir=0, top=false) {
-        // this.dead = true;
-        // this.motion.x = 0;
-        console.log('edeath');
-
         if(source.code === 'player') {
-            console.log("DROP SHELL")
             let drop = this.texture == 'red_koopa' ? 'red_shell': 'shell';
             spawn(drop, this.s.x, this.s.y).invincible = 2;
             this.despawn();
@@ -1192,7 +1184,6 @@ function importLevel(data=false, type='url', sub='level', editor=false) {
 
     // Import from local file
     if(type === 'upload') {
-        console.log('EEEEEEEEEEE');
         var file = importInput.files[0];
         var reader = new FileReader();
         reader.onload = event => importLevel(JSON.parse(String(event.target.result)), 'raw');
@@ -1200,7 +1191,13 @@ function importLevel(data=false, type='url', sub='level', editor=false) {
         return;
     }
 
+    // Remember player data between sublevels
+    let forms = {};
+    for(let [playerID, player] of Object.entries(players)) forms[playerID] = player?.object?.form;
+
+    // Reset
     reset();
+
     let imported;
     if(data && type === 'url') {
         // Import from serverside file
@@ -1258,8 +1255,8 @@ function importLevel(data=false, type='url', sub='level', editor=false) {
 
         // Objects
         for(obj of imported.objects) {
-            let m = spawn(obj.type, obj.x, obj.y);
-            if(obj.type == 'mario' || obj.type == 'luigi') player1 = m;
+            let o = spawn(obj.type, obj.x, obj.y);
+            /*if(sub !== 'level')*/ o.form = forms[o.player] || o.form;
         }
 
         // Update
@@ -1325,7 +1322,8 @@ function spawn(name='goomba', x=0, y=0, data={}, data_referential={}) {
     o.s.y = y;
     o.s.scale.x = o.facing * 3;
 
-    if(name === 'flag') world.flag = o;
+    for(let [playerID, player] of Object.entries(players)) if(o.player == playerID) player.object = o;
+    if(name === 'flag') world.flag = o; // Flag
 
     // Interactable
     if(!data.ghost) {
@@ -1475,10 +1473,11 @@ function menuKey() {
 /** Pause/Unpause */
 function pause(state=undefined) {
     // if(world.paused && world.editing) {
-
     //     return console.warn('Are you sure you want to exit editor mode? Unsaved changes will be lost');
     // }
     world.paused = state === undefined ? !world.paused : state;
+    for(let [keycol, col] of Object.entries(stage)) for(let [key, tile] of Object.entries(col)) playPauseSprite(tile); // Play/pause tiles
+    for(let [id, object] of Object.entries(physicsObjects)) playPauseSprite(object.s);
 }
 
 /** Toggle main menu */
@@ -1850,10 +1849,7 @@ function setting(name='controls', state='no') {
     else checkbox.checked = state;
 
     // Update
-    if(name === 'controls') {
-        console.log(checkbox.checked);
-        style(body, 'show_controls', checkbox.checked);
-    }
+    if(name === 'controls') style(body, 'show_controls', checkbox.checked);
 }
 
 config_scroll_behavior.addEventListener('change', event => {

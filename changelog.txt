@@ -1,3 +1,8 @@
+v0.19   July 6, 2023
+- Fixed sprite animations not starting/stopping when the game is paused/unpaused
+- Powerups will now be remembered between levels
+
+
 v0.18   July 5, 2023
 - Fixed red shells being intangible
 - Non-players will no longer take damage from spikes
