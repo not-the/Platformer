@@ -1,4 +1,4 @@
-v0.20   July 18, 2023
+v0.20   July 31, 2023
 - Game now uses delta value for consistent behavior between framerates
 - Added a max delta value to prevent clipping into walls
 
