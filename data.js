@@ -199,10 +199,10 @@ const menus = {
         // Col 2
         // {
         //     texture: 'button_large_blue',
-        //     'label': 'PLACEHOLDER',
+        //     'label': 'plant_demo',
         //     x: 524,
         //     y: 128,
-        //     click: () => { importLevel('./levels/test.json') },
+        //     click: () => { importLevel('./levels/plant_demo.json') },
         // },
         // {
         //     texture: 'button_large_blue',
@@ -972,7 +972,7 @@ const objectTemplate = {
     // My game
     'dude': {
         texture: 'dude_small_still',
-        code: 'player',
+        code: 'dude',
     
         type: 'dude',
         player: 1,
@@ -1462,6 +1462,49 @@ const tileDataset = {
 
         container: true,
     }),
+
+    // Dude game
+    'g_ground': new tileData({
+        texture: anim.g_ground,
+        collision: true,
+    }),
+    'g_ground_dark': new tileData({
+        texture: anim.g_ground_dark,
+        collision: true,
+    }),
+    'ground_dark_tl': new tileData({
+        texture: anim.ground_dark_tl,
+        collision: true,
+    }),
+    'ground_dark_tr': new tileData({
+        texture: anim.ground_dark_tr,
+        collision: true,
+    }),
+    'ground_mtl': new tileData({
+        texture: anim.ground_mtl,
+        collision: true,
+    }),
+    'ground_mtr': new tileData({
+        texture: anim.ground_mtr,
+        collision: true,
+    }),
+    'ground_tl': new tileData({
+        texture: anim.ground_tl,
+        collision: true,
+    }),
+    'ground_top': new tileData({
+        texture: anim.ground_top,
+        collision: true,
+    }),
+    'ground_tr': new tileData({
+        texture: anim.ground_tr,
+        collision: true,
+    }),
+
+    'g_lamp': new tileData({
+        texture: anim.g_lamp,
+        collision: false,
+    }),
 }
 
 
@@ -1545,6 +1588,16 @@ const structures = {
 
 
 const powers = {
+    'small': {
+        action: object => {
+            // Dude demo
+            if(object.type !== 'dude') return
+
+            // Whip
+            if(object.attacking) return;
+            object.attacking = 45;
+        }
+    },
     // Temporary - Mega Man projectiles
     'big': {
         action: object => {

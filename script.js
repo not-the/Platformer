@@ -9,6 +9,7 @@ function setEditorTool() {
 }
 
 // Players
+let delta = 0.5;
 var players = {};
 let playerID = 1;
 
@@ -203,7 +204,7 @@ class entity {
         if(this.doMotion) this.physics();
 
         if(this.disabled) return;
-        if(this.player) this.playerControls(); /** Player controlled */
+        if(this.player) this.playerControls(undefined); /** Player controlled */
         else if(this.ai_info) this.ai(); /** AI controlled */
 
         // Animate
@@ -384,7 +385,7 @@ class entity {
         ) {
             // Falling
             if(this.jumping && Math.sign(this.motion.y) == -1) grav *= 0.7;
-            this.motion.y += grav;
+            this.motion.y += grav * delta*2;
             this.grounded = false;
         } else if(this.s.y >= ground) {
             // Halt
@@ -483,12 +484,13 @@ class entity {
         else this.motion.x = 0; // Hit wall
         if(allowYMotion || !this.collision) this.runMotion('y'); // Move subject
         else this.motion.y = 0; // Hit ceiling
-        // this.s.angle += this.motion.r;
+        // this.s.angle += this.motion.r*delta*2;
         
         // Apply friction
         if(this.friction) {
             if(this.grounded) this.motion.x -= (this.motion.x * (1 - world.resist_x*this.traction)) // Ground friction
-            * this.adj.under.data.friction; // Tile friction
+            * this.adj.under.data.friction // Tile friction
+            * (delta*2); // Delta
             else this.motion.x *= world.air_resist_x*this.air_traction; // Air friction
             if(Math.abs(this.motion.x) < world.absolute_slow) this.motion.x = 0; // Round to 0
         }
@@ -499,7 +501,7 @@ class entity {
                 (tileDataset[adj.inside.type].collision.in ||
                     (tall && tileDataset[adj.up.type].collision.in))
         ) {
-            this.s.x += - 1 * Math.sign(this.s.scale.x);
+            this.s.x += - 1 * Math.sign(this.s.scale.x) * delta*2;
         }; // Move back if stuck in a block
         adj.inside.data.collide('in', adj.inside, this); // Inside
         if(tall) adj.up.data.collide('in', adj.up, this); // Inside
@@ -636,12 +638,12 @@ class entity {
         else if(this.crouching && this.grounded && !(this.form != 'small' && tileDataset[this.adj.up.type].collision.d)) this.crouching = false;
         // Right
         if(this.controls.right) {
-            if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration;
+            if(this.motion.x < this.speed_x && (!this.crouching || !this.grounded)) this.motion.x += acceleration * delta*2;
             if(this.grounded || this.form == 'parkour' || this.turns_midair) this.facing = 1;
         };
         // Left
         if(this.controls.left) {
-            if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration;
+            if(this.motion.x > this.speed_x*-1 && (!this.crouching || !this.grounded)) this.motion.x -= acceleration * delta*2;
             if(this.grounded || this.form == 'parkour' || this.turns_midair) this.facing = -1;
         };
         // Action
@@ -702,11 +704,11 @@ class entity {
         if(this.ai_info.auto_walk) {
             // Right
             if(this.facing == 1) {
-                if(this.motion.x < this.speed_x) this.motion.x += acceleration;
+                if(this.motion.x < this.speed_x) this.motion.x += acceleration * delta*2;
             };
             // Left
             if(this.facing == -1) {
-                if(this.motion.x > this.speed_x*-1) this.motion.x -= acceleration;
+                if(this.motion.x > this.speed_x*-1) this.motion.x -= acceleration * delta*2;
             };
         }
 
@@ -845,7 +847,7 @@ class entity {
 
 
     /** Move based on motion */
-    runMotion(axis='x') { this.s[axis] += this.motion[axis]; }
+    runMotion(axis='x') { this.s[axis] += this.motion[axis] * delta*2; }
 }
 
 class player extends entity {
@@ -1069,6 +1071,62 @@ class fireball extends entity {
         }
     }
 }
+class dude extends player {
+    animations() {
+
+        /* ----- Animate ----- */
+        // Override
+        if(this.sprite_override) setAnimation(this.s, this.sprite_override);
+        // Using power
+        else if(this.power_anim > 0) setAnimation(this.s, `${this.type}_${this.form}_throw`);
+
+        // Whip
+        else if(this.attacking > 0) { 
+            setAnimation(this.s, `dude_attack`);
+            this.attacking--;
+            // this.gravity_present = (this.attacking > 0) ? 0.2 : 1;
+            // this.motion.y /= 2;
+        }
+
+        // Crouch
+        else if(this.crouching) setAnimation(this.s, `${this.type}_${this.form}_crouch`);
+        // Jump
+        else if(!this.grounded) {
+            if(this.motion.y < -1) setAnimation(this.s, `${this.type}_${this.form}_jump`); // Rising
+            else if(this.motion.y > -1 && this.motion.y < 1) setAnimation(this.s, `${this.type}_${this.form}_still`); // Apex
+            else setAnimation(this.s, `${this.type}_${this.form}_fall`); // Falling
+        }
+        // Turn
+        else if(
+            this.controls.right && Math.sign(this.motion.x) == -1
+            || this.controls.left && Math.sign(this.motion.x) == 1
+        ) {
+           setAnimation(this.s, `${this.type}_${this.form}_turn`);
+        }
+        // Run
+        else if(this.controls.right || this.controls.left) {
+            setAnimation(this.s, `${this.type}_${this.form}_run`);
+            if(this.controls.run) this.s.animationSpeed = 0.24;
+            else this.s.animationSpeed = 0.16;
+        }
+        // Still
+        else setAnimation(this.s, `${this.type}_${this.form}_still`);
+
+        // Filters
+        if(this.star_mode && this.s.filters?.length === 0) this.s.filters = [filters.rainbow];
+        else if(this.s.filters?.length !== 0) this.s.filters = [];
+
+        // Power animations
+        const power = powers?.[this.form];
+        if(power?.animate !== undefined) power.animate(this);
+
+
+
+        // DUDE hover
+        // if(this.controls.jump && Math.sign(this.motion.y) === 1) this.gravity_present = 0.05;
+        // else this.gravity_present = 1;
+    }
+}
 
 const entities = {
     'player':   player,
@@ -1080,6 +1138,7 @@ const entities = {
     'shell':    shell,
     'bill':     enemy,
     'fireball': fireball,
+    'dude':     dude,
 }
 
 
@@ -1522,25 +1581,26 @@ let cycle = 0;
 let elapsed = 0.0;
 app.ticker.add(gameTick);
 
-function gameTick(delta, repeat=false) {
-    elapsed += delta;
+function gameTick(d, repeat=false) {
+    delta = d > 1.25 ? 1.25 : d; // If below a certain framerate, slow game down instead of allowing objects to clip into tiles
+    elapsed += d;
+    cycle++;
 
     // Determine framerate
-    cycle++;
-    if(elapsed < 120) {
-        let gs = Math.round(app.ticker.FPS / 60);
-        /* if(gamespeed < gs) */ gamespeed = gs;
-    }
+    // if(elapsed < 120) {
+    //     let gs = Math.round(app.ticker.FPS / 60);
+    //     /* if(gamespeed < gs) */ gamespeed = gs;
+    // }
 
     // Editor
     if(world.editing && world.paused && world.menu === 'editor') {
         let dis = pressed['shift'] ? 10 : 4;
-        if(pressed['arrowright'] || pressed['d'])   panCamera(app.stage.x - dis,    app.stage.y);
-        if(pressed['arrowleft'] || pressed['a'])    panCamera(app.stage.x + dis,    app.stage.y);
+        if(pressed['arrowright'] || pressed['d'])   panCamera(app.stage.x - dis * delta*2,    app.stage.y);
+        if(pressed['arrowleft'] || pressed['a'])    panCamera(app.stage.x + dis * delta*2,    app.stage.y);
         // if(pressed['arrowup'] || pressed['w'])      panCamera(app.stage.x,          app.stage.y + dis);
         // if(pressed['arrowdown'] || pressed['s'])    panCamera(app.stage.x,          app.stage.y - dis);
-        if(pressed['arrowup'] || pressed['w']) app.stage.y += dis;
-        if(pressed['arrowdown'] || pressed['s']) app.stage.y -= dis;
+        if(pressed['arrowup'] || pressed['w']) app.stage.y += dis * delta*2;;
+        if(pressed['arrowdown'] || pressed['s']) app.stage.y -= dis * delta*2;;
     }
 
     // Physics
@@ -1573,7 +1633,7 @@ function gameTick(delta, repeat=false) {
 
     // Animated tiles
     for(i in animatingTiles) {       
-        // Animat
+        // Animate
         let item = animatingTiles[i];
         if(item.animation == 'bounce') {
             if(item.time <= item.length/2) item.tile.y += 1;
@@ -1697,8 +1757,8 @@ function gameTick(delta, repeat=false) {
     // </table>`;
 
     // Run again
-    if(repeat || elapsed < 120) return;
-    if(gamespeed == 1) gameTick(0, true);
+    // if(repeat || elapsed < 120) return;
+    // if(gamespeed == 1) gameTick(0, true);
 }
 
 /** Determines average player's location and pans the camera there */

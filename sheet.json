@@ -320,16 +320,34 @@
 
 
 
-        "dude_small_0": "mine/player/0",
-        "dude_small_still": "mine/player/1",
-        "dude_small_2": "mine/player/2",
-        "dude_small_3": "mine/player/3",
+        "dude_small_still": "mine/player/still",
+        "dude_small_walk1": "mine/player/walk1",
+        "dude_small_walk2": "mine/player/walk2",
+        "dude_small_walk3": "mine/player/walk3",
+        "dude_small_turn": "mine/player/turn",
+        "dude_small_jump": "mine/player/jump",
+        "dude_small_fall": "mine/player/falling",
+        "dude_small_fall2": "mine/player/falling2",
         "dude_small_crouch": "mine/player/crouch",
         "dude_small_crouch1": "mine/player/crouch1",
         "dude_small_crouch2": "mine/player/crouch2",
         "dude_small_crouch3": "mine/player/crouch3",
+        "dude_attack1": "mine/player/attack1",
+        "dude_attack2": "mine/player/attack2",
 
-        "dude_ground": "mine/tile/ground"
+        "g_snail": "mine/enemy/snail",
+
+        "g_ground": "mine/tile/ground",
+        "g_ground_dark": "mine/tile/ground_dark",
+        "ground_dark_tl": "mine/tile/ground_dark_tl",
+        "ground_dark_tr": "mine/tile/ground_dark_tr",
+        "ground_mtl": "mine/tile/ground_mtl",
+        "ground_mtr": "mine/tile/ground_mtr",
+        "ground_tl": "mine/tile/ground_tl",
+        "ground_top": "mine/tile/ground_top",
+        "ground_tr": "mine/tile/ground_tr",
+
+        "g_lamp": "mine/tile/lamp"
     },
     "animations": {
         "button_large": ["button_large", "button_large_hover"],
@@ -400,10 +418,10 @@
 
 
 
-        "dude_small_run": ["dude_small_2", "dude_small_3", "dude_small_2", "dude_small_still", "dude_small_0"],
-        "dude_small_jump": ["dude_small_3"],
+        "dude_small_run": ["dude_small_walk1", "dude_small_walk2", "dude_small_walk3", "dude_small_still"],
+        "dude_small_fall": ["dude_small_fall", "dude_small_fall2"],
         "dude_small_crouch": ["dude_small_crouch1", "dude_small_crouch2", "dude_small_crouch3", "dude_small_crouch"],
-        "dude_small_fall": ["dude_small_still"],
-        "dude_small_turn": ["dude_small_2"]
+        "dude_small_turn": ["dude_small_turn"],
+        "dude_attack": ["dude_attack1", "dude_attack2", "dude_attack2", "dude_attack2", "dude_attack2", "dude_attack2", "dude_attack2"]
     }
 }

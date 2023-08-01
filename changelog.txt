@@ -1,3 +1,8 @@
+v0.20   July 18, 2023
+- Game now uses delta value for consistent behavior between framerates
+- Added a max delta value to prevent clipping into walls
+
+
 v0.19   July 6, 2023
 - Fixed sprite animations not starting/stopping when the game is paused/unpaused
 - Powerups will now be remembered between levels

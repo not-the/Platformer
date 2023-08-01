@@ -11,7 +11,7 @@ let app = new PIXI.Application({ width: 1200, height: 672 });
 app.renderer.background.color = 0x9290ff;
 PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
 app.stage.y += 48;
-document.getElementById('game').appendChild(app.view);
+gamespace.appendChild(app.view);
 
 /** Image filters */
 const filters = {
